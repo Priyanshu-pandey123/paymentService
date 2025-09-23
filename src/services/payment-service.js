@@ -1,0 +1,196 @@
+const axios = require('axios');
+const {StatusCodes} = require('http-status-codes');
+const Razorpay = require("razorpay");
+const { PaymentRepository } = require('../repositories');
+const { ServerConfig, Queue } = require('../config')
+const db = require('../models');
+const AppError = require('../utils/errors/app-error');
+const crypto = require('crypto');
+// const {Enums} = require('../utils/common');
+ const {planData}= require("../utils/plan")
+const {logger,RazorConfig}= require('../config')
+
+
+ const paymentRepository=new PaymentRepository();
+
+const razorpay = new Razorpay({
+    key_id: RazorConfig.RAZORPAY_KEY_ID,
+    key_secret:RazorConfig.RAZORPAY_SECRET,
+  });
+
+async function createPayment(data) {
+
+     console.log("in  the payment service", data)
+   
+    try {
+       const { plan }= data; 
+       
+    if (!plan) {   
+        logger.error("some feild are missig ");
+        throw new AppError("select the plan for payment", StatusCodes.BAD_REQUEST);
+      }
+
+     const selectedPlan = planData.find((p) => p.plan === plan);
+
+    if (!selectedPlan) {
+      logger.error("Invalid plan selected", { plan });
+      throw new AppError("Invalid plan selected", StatusCodes.BAD_REQUEST);
+    }
+      const { amount, email, description, contact, plan: planName , name} = selectedPlan;
+      const options = {
+      amount: amount,
+      currency: "INR",
+      receipt: `receipt_${Date.now()}`,
+      notes: {
+        plan: planName,
+        email,
+        description,
+      },
+    };
+
+      const order = await razorpay.orders.create(options);
+      const payment= await paymentRepository.createPayment(
+        {
+            name,
+            email,
+            contact,
+            amount: amount, 
+            description,
+            order_id: order.id,
+            payment_status: "PENDING",
+        }
+      ) 
+
+  
+
+      
+      logger.info("Order created", { orderId: order.id, amount: options.amount });
+      return { order, payment };
+       
+    } catch(error) {
+      console.log(error)
+      throw error;
+    }
+    
+}
+
+async function verifyPayment(data) {
+ try {
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = data;
+  if(!razorpay_order_id || !razorpay_payment_id || !razorpay_signature){
+    throw new AppError("Missing required verification fields", StatusCodes.BAD_REQUEST);
+  }
+
+  logger.info("int  the paynment service")
+
+  const dataToSign = `${razorpay_order_id}|${razorpay_payment_id}`;
+
+  const expectedSignature = crypto
+  .createHmac("sha256", RazorConfig.RAZORPAY_SECRET)
+  .update(dataToSign)
+  .digest("hex");
+
+  const isValid = expectedSignature === razorpay_signature;
+
+  const updates = {
+    payment_id: razorpay_payment_id,
+    payment_verified: isValid ? "YES" : "NO"
+  };
+
+  const updatedPayment = await paymentRepository.updatePaymentByOrderId(razorpay_order_id, updates);
+  if(!updatedPayment){
+    throw new AppError("Payment order not found", StatusCodes.NOT_FOUND);
+  }
+
+  return {
+    success: isValid,
+    message: isValid ? "Payment verified" : "Invalid signature",
+    payment: updatedPayment
+  };
+ } catch(error) {
+  logger.error("Payment verify error", { error: error.message, stack: error.stack });
+  throw error;
+ }
+}
+
+// Helper function to validate webhook signature
+function validateWebhookSignature(body, signature, secret) {
+  const expectedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(body)
+    .digest('hex');
+  
+  return expectedSignature === signature;
+}
+
+async function paymentWebhook(req, res) {
+ 
+  try {
+    const webhookSignature = req.get("X-Razorpay-Signature");
+    logger.info("Webhook invoked", { hasSignature: Boolean(webhookSignature) });
+
+    if (!webhookSignature) {
+      logger.warn("Webhook signature missing");
+      return res.status(400).json({ success: false, error: "Signature missing" });
+    }
+
+    const rawBody = JSON.stringify(req.body);
+    const isWebhookValid = validateWebhookSignature(
+      rawBody,
+      webhookSignature,
+      RazorConfig.RAZORPAY_WEBHOOK_SECRET
+    );
+
+    if (!isWebhookValid) {
+      logger.warn("Invalid webhook signature");
+      return res.status(400).json({ success: false, error: "Invalid signature" });
+    }
+
+    const payload = req.body;
+    const paymentDetails = payload?.payload?.payment?.entity;
+    
+    if (paymentDetails) {
+      const updates = {
+        payment_id: paymentDetails.id,
+        payment_verified: "YES"
+      };
+
+      if (payload.event === "payment.captured") {
+        updates.payment_status = "SUCCESS";
+        await paymentRepository.updatePaymentByOrderId(paymentDetails.order_id, updates);
+      } else if (payload.event === "payment.failed") {
+        updates.payment_status = "FAILED";
+        updates.payment_verified = "NO";
+        await paymentRepository.updatePaymentByOrderId(paymentDetails.order_id, updates);
+      }
+
+      logger.info("Webhook processed", {
+        event: payload?.event, 
+        paymentId: paymentDetails?.id,
+        orderId: paymentDetails?.order_id,
+        amount: paymentDetails?.amount,
+      });
+
+      return res.status(200).json({ success: true });
+    }
+
+    logger.warn("No payment details found in webhook payload");
+    return res.status(400).json({ success: false, error: "No payment details found" });
+
+  } catch(error) {
+    logger.error("Webhook handler error", { error: error.message, stack: error.stack });
+    return res.status(500).json({ success: false, error: "Server error" });
+  }
+}
+ 
+
+
+
+
+module.exports = {
+    createPayment,
+    verifyPayment,
+    paymentWebhook
+
+}
+
