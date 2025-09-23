@@ -22,8 +22,12 @@ module.exports = {
         allowNull: false
       },
       amount: {
-        type: Sequelize.DECIMAL(15,2),
+        type: Sequelize.DECIMAL(15, 2),
         allowNull: false
+      },
+      currency: {
+        type: Sequelize.STRING(10),
+        allowNull: true
       },
       description: {
         type: Sequelize.TEXT,
@@ -31,22 +35,58 @@ module.exports = {
       },
       order_id: {
         type: Sequelize.STRING,
-        allowNull: true
+        allowNull: true,
+        index: true
       },
       payment_id: {
         type: Sequelize.STRING,
+        allowNull: true,
+        unique: true
+      },
+      method: {
+        type: Sequelize.STRING(50),
         allowNull: true
       },
-        payment_verified: {
-          type: Sequelize.ENUM('YES','NO'),
-          allowNull: false,
-          defaultValue: 'NO'
+      status: {
+        type: Sequelize.STRING(50),
+        allowNull: true
+      },
+      vpa: {
+        type: Sequelize.STRING(100),
+        allowNull: true
+      },
+      fee: {
+        type: Sequelize.DECIMAL(15, 2),
+        allowNull: true
+      },
+      tax: {
+        type: Sequelize.DECIMAL(15, 2),
+        allowNull: true
+      },
+      payment_verified: {
+        type: Sequelize.ENUM('YES', 'NO'),
+        allowNull: false,
+        defaultValue: 'NO'
       },
       payment_status: {
-        type: Sequelize.ENUM('PENDING','SUCCESS','FAILED'),
+        type: Sequelize.ENUM('PENDING', 'SUCCESS', 'FAILED'),
         allowNull: false,
         defaultValue: 'PENDING'
       },
+      acquirer_data: {
+        type: Sequelize.JSON,
+        allowNull: true
+      },
+      notes: {
+        type: Sequelize.JSON,
+        allowNull: true
+      },
+      raw_payload: {
+        type: Sequelize.JSON,
+        allowNull: false,
+        defaultValue: {}
+      },
+
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
@@ -55,7 +95,7 @@ module.exports = {
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP')
       }
     });
   },

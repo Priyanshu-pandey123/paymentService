@@ -113,7 +113,7 @@ async function verifyPayment(data) {
  }
 }
 
-// Helper function to validate webhook signature
+
 function validateWebhookSignature(body, signature, secret) {
   const expectedSignature = crypto
     .createHmac('sha256', secret)
@@ -123,8 +123,8 @@ function validateWebhookSignature(body, signature, secret) {
   return expectedSignature === signature;
 }
 
+
 async function paymentWebhook(req, res) {
- 
   try {
     const webhookSignature = req.get("X-Razorpay-Signature");
     logger.info("Webhook invoked", { hasSignature: Boolean(webhookSignature) });
@@ -133,6 +133,10 @@ async function paymentWebhook(req, res) {
       logger.warn("Webhook signature missing");
       return res.status(400).json({ success: false, error: "Signature missing" });
     }
+
+    // console.log("******************************* Webhook Data *******************************");
+    // console.log(JSON.stringify(req.body, null, 2));
+    // console.log("***************************************************************************");
 
     const rawBody = JSON.stringify(req.body);
     const isWebhookValid = validateWebhookSignature(
@@ -148,41 +152,64 @@ async function paymentWebhook(req, res) {
 
     const payload = req.body;
     const paymentDetails = payload?.payload?.payment?.entity;
-    
-    if (paymentDetails) {
-      const updates = {
-        payment_id: paymentDetails.id,
-        payment_verified: "YES"
-      };
 
-      if (payload.event === "payment.captured") {
-        updates.payment_status = "SUCCESS";
-        await paymentRepository.updatePaymentByOrderId(paymentDetails.order_id, updates);
-      } else if (payload.event === "payment.failed") {
-        updates.payment_status = "FAILED";
-        updates.payment_verified = "NO";
-        await paymentRepository.updatePaymentByOrderId(paymentDetails.order_id, updates);
-      }
-
-      logger.info("Webhook processed", {
-        event: payload?.event, 
-        paymentId: paymentDetails?.id,
-        orderId: paymentDetails?.order_id,
-        amount: paymentDetails?.amount,
-      });
-
-      return res.status(200).json({ success: true });
+    if (!paymentDetails) {
+      logger.warn("No payment details found in webhook payload");
+      return res.status(400).json({ success: false, error: "No payment details found" });
     }
 
-    logger.warn("No payment details found in webhook payload");
-    return res.status(400).json({ success: false, error: "No payment details found" });
+   
+    const updates = {
+      payment_id: paymentDetails.id,
+      raw_payload: payload,
+      payment_verified: "YES",// check if wanted 
+      status: paymentDetails.status || null,
+      method: paymentDetails.method || null,
+      currency: paymentDetails.currency || null,
+      vpa: paymentDetails.vpa || paymentDetails?.upi?.vpa || null,
+      fee: paymentDetails.fee || 0,
+      tax: paymentDetails.tax || 0,
+      acquirer_data: paymentDetails.acquirer_data || {},
+      notes: paymentDetails.notes || {}
+    };
 
-  } catch(error) {
-    logger.error("Webhook handler error", { error: error.message, stack: error.stack });
+
+    switch (payload.event) {
+      case "payment.captured":
+        updates.payment_status = "SUCCESS";
+        break;
+      case "payment.failed":
+        updates.payment_status = "FAILED";
+        updates.payment_verified = "NO";
+        break;
+      default:
+        logger.info("Unhandled Razorpay event", { event: payload.event });
+        break;
+    }
+
+
+    await paymentRepository.updatePaymentByOrderId(paymentDetails.order_id, updates);
+
+    logger.info("Webhook processed", {
+      event: payload?.event,
+      paymentId: paymentDetails?.id,
+      orderId: paymentDetails?.order_id,
+      amount: paymentDetails?.amount,
+      status: updates.payment_status
+    });
+
+    return res.status(200).json({ success: true });
+
+  } catch (error) {
+    logger.error("Webhook handler error", {
+      error: error.message,
+      stack: error.stack
+    });
     return res.status(500).json({ success: false, error: "Server error" });
   }
 }
- 
+
+
 
 
 
