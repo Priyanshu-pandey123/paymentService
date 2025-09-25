@@ -1,16 +1,17 @@
 const express = require('express');
 
 const { InfoController } = require('../../controllers');
-
-// const bookingRoutes = require('./booking');
-const  paymentRoutes= require('./payment')
+const paymentRoutes = require('./payment')
+const  paymentDashRoute= require('./paymentDashRoute')
+const {logger} = require('../../config')
 
 const router = express.Router();
 
 router.get('/info', InfoController.info);
 router.use("/payment", paymentRoutes);
 router.use("/sms", paymentRoutes);
+router.use("/dash", paymentDashRoute);
 
-// router.use('/bookings', bookingRoutes);
+
 
 module.exports = router;

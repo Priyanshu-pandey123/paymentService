@@ -25,20 +25,37 @@ class CrudRepository {
         return response;
     }
 
-    async get(data) {
-        const response = await this.model.findByPk(data);
-        if(!response) {
-            throw new AppError('Not able to fund the resource', StatusCodes.NOT_FOUND);
-        }
-        return response;
-    }
+ async getAll() {
+ const page=1, limit=10;
+  const offset = (page - 1) * limit;
+  const { count, rows } = await this.model.findAndCountAll({
+    limit,
+    offset,
+    order: [['createdAt', 'DESC']],
+  });
 
-    async getAll() {
-        const response = await this.model.findAll();
-        return response;
-    }
+  const totalPayments = count;
+  const totalPages = Math.ceil(count / limit);
 
-    async update(id, data) { // data -> {col: value, ....}
+  console.log(totalPages,totalPayments,limit,page)
+
+  return {
+    totalPayments,
+    totalPages,
+    currentPage: page,
+    limit,
+    data: rows,
+  };
+}
+
+
+
+    // async getAll() {
+    //     const response = await this.model.findAll();
+    //     return response;
+    // }
+
+    async update(id, data) { 
         const response = await this.model.update(data, {
             where: {
                 id: id

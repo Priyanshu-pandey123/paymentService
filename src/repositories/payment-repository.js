@@ -2,9 +2,6 @@
 const { StatusCodes } = require('http-status-codes');
 const { Op } = require("sequelize");
 const {Payment} = require("../models")
-
-console.log(Payment)
-
 const CrudRepository = require('./crud-repository');
 const {Enums} = require('../utils/common');
 
@@ -13,8 +10,6 @@ class PaymentRepository extends CrudRepository {
         super(Payment);
     }
     async createPayment(data) {
-         console.log(" in  the paymenyt repo")
-
          const   payment = await Payment.create(data)
          return  payment;
        

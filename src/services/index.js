@@ -1,3 +1,4 @@
 module.exports = {
-  PaymentService: require("./payment-service")
+  PaymentService: require("./payment-service"),
+  PaymentDashService:require("./payment-dash-service")
 }

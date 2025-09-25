@@ -20,7 +20,7 @@ const razorpay = new Razorpay({
 
 async function createPayment(data) {
 
-     console.log("in  the payment service", data)
+
    
     try {
        const { plan }= data; 
@@ -134,9 +134,9 @@ async function paymentWebhook(req, res) {
       return res.status(400).json({ success: false, error: "Signature missing" });
     }
 
-    // console.log("******************************* Webhook Data *******************************");
-    // console.log(JSON.stringify(req.body, null, 2));
-    // console.log("***************************************************************************");
+    console.log("******************************* Webhook Data *******************************");
+    console.log(JSON.stringify(req.body, null, 2));
+    console.log("***************************************************************************");
 
     const rawBody = JSON.stringify(req.body);
     const isWebhookValid = validateWebhookSignature(
