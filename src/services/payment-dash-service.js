@@ -15,12 +15,12 @@ const paymentDashRepository=new PaymentDashRepository();
 
 
 
-async function getAllPayment() {
+async function getAllPayment(limit,page) {
 
     try {
       
 
-      const response =await paymentDashRepository.getAllPayment(); 
+      const response =await paymentDashRepository.getAllPayment(limit,page); 
 
  
       return  response;

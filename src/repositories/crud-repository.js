@@ -25,8 +25,9 @@ class CrudRepository {
         return response;
     }
 
- async getAll() {
- const page=1, limit=10;
+ async getAll(limit=20,page=1) {
+  limit = Number(limit);
+  page = Number(page);
   const offset = (page - 1) * limit;
   const { count, rows } = await this.model.findAndCountAll({
     limit,
@@ -37,7 +38,7 @@ class CrudRepository {
   const totalPayments = count;
   const totalPages = Math.ceil(count / limit);
 
-  console.log(totalPages,totalPayments,limit,page)
+
 
   return {
     totalPayments,

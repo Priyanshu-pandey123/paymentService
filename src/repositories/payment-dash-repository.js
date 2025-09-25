@@ -9,8 +9,8 @@ class PaymentDashRepository extends CrudRepository {
     constructor() {
         super(Payment);
     }
-    async getAllPayment() {
-         const   allPayment = await this.getAll()
+    async getAllPayment(limit,page) {
+         const   allPayment = await this.getAll(limit,page)
          return  allPayment;
        
     } 

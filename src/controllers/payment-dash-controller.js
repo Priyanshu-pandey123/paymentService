@@ -8,9 +8,10 @@ const {PaymentDashService}= require("../services")
  async function getAllPayment(req, res) {
       try{
 
+       const {limit , page} = req.query;
 
      
-           const response = await PaymentDashService.getAllPayment();
+           const response = await PaymentDashService.getAllPayment(limit,page);
     
            SuccessResponse.data = response;
            return res
