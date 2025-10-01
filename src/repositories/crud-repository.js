@@ -50,12 +50,6 @@ class CrudRepository {
 }
 
 
-
-    // async getAll() {
-    //     const response = await this.model.findAll();
-    //     return response;
-    // }
-
     async update(id, data) { 
         const response = await this.model.update(data, {
             where: {

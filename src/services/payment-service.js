@@ -19,9 +19,6 @@ const razorpay = new Razorpay({
   });
 
 async function createPayment(data) {
-
-
-   
     try {
        const { plan }= data; 
        
@@ -58,6 +55,7 @@ async function createPayment(data) {
             description,
             order_id: order.id,
             payment_status: "PENDING",
+            plan:plan
         }
       ) 
 
@@ -136,6 +134,7 @@ async function paymentWebhook(req, res) {
 
     console.log("******************************* Webhook Data *******************************");
     console.log(JSON.stringify(req.body, null, 2));
+    logger.info("webhook  data ",JSON.stringify(req.body ));
     console.log("***************************************************************************");
 
     const rawBody = JSON.stringify(req.body);
@@ -209,6 +208,30 @@ async function paymentWebhook(req, res) {
   }
 }
 
+async function cancelPayment(orderId) {
+ try {
+
+
+  logger.info(" the paynment cancelled service for orderId ",orderId)
+    const updates = {
+     payment_status:"CANCELLED"
+    }
+   const response = await paymentRepository.updatePaymentByOrderId(orderId,updates)
+   return response;
+
+
+ 
+
+  return {
+
+  };
+ } catch(error) {
+  logger.error("Payment verify error", { error: error.message, stack: error.stack });
+  throw error;
+ }
+}
+
+
 
 
 
@@ -217,7 +240,8 @@ async function paymentWebhook(req, res) {
 module.exports = {
     createPayment,
     verifyPayment,
-    paymentWebhook
+    paymentWebhook,
+    cancelPayment
 
 }
 

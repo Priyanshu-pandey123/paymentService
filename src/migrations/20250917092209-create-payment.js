@@ -3,16 +3,23 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('payments', {
-      id: {
+      uuid: {
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4,
         allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER
+        primaryKey: true
       },
+
       name: {
         type: Sequelize.STRING(100),
         allowNull: false
       },
+        plan: {
+      type: Sequelize.ENUM('STARTER', 'GROWTH', 'PRO', 'ELITE'),
+      allowNull: false,
+      defaultValue: 'STARTER',
+    },
+
       email: {
         type: Sequelize.STRING(150),
         allowNull: false
@@ -69,7 +76,7 @@ module.exports = {
         defaultValue: 'NO'
       },
       payment_status: {
-        type: Sequelize.ENUM('PENDING', 'SUCCESS', 'FAILED'),
+        type: Sequelize.ENUM('PENDING', 'SUCCESS', 'FAILED',"CANCELLED"),
         allowNull: false,
         defaultValue: 'PENDING'
       },

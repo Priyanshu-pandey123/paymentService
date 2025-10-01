@@ -10,6 +10,7 @@ const router = express.Router();
 
  router.post("/payment-verify",PaymentController.verifyPayment )
 
- router.post("/payment-verify-webhook",PaymentController.paymentWebhook )
+  router.post("/payment-verify-webhook",PaymentController.paymentWebhook )
+  router.post("/cancel-payment",PaymentController.cancelPayment )
 
 module.exports = router;

@@ -4,16 +4,29 @@ const { Model, DataTypes } = require('sequelize');
 module.exports = (sequelize) => {
   class Payment extends Model {
     static associate(models) {
-      // Example: Payment.belongsTo(models.User, { foreignKey: 'userId' });
+    
     }
   }
 
   Payment.init(
     {
+
+       uuid: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4, 
+        allowNull: false,
+        primaryKey: true
+      },
       name: {
         type: DataTypes.STRING(100),
         allowNull: false
       },
+          plan: {
+        type: DataTypes.ENUM('STARTER', 'GROWTH', 'PRO', 'ELITE'),
+        allowNull: false,
+        defaultValue: 'STARTER',
+      },
+
       email: {
         type: DataTypes.STRING(150),
         allowNull: false
@@ -68,12 +81,12 @@ module.exports = (sequelize) => {
         defaultValue: 'NO'
       },
       payment_status: {
-        type: DataTypes.ENUM('PENDING', 'SUCCESS', 'FAILED'),
+        type: DataTypes.ENUM('PENDING', 'SUCCESS', 'FAILED','CANCELLED'),
         allowNull: false,
         defaultValue: 'PENDING'
       },
       acquirer_data: {
-        type: DataTypes.JSON,
+        type: DataTypes.JSON, 
         allowNull: true
       },
       notes: {

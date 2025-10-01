@@ -7,7 +7,7 @@ const {PaymentService}= require("../services")
  async function createPayment(req, res) {
       try{
 
-        console.log("in  the controller")
+    
 
             
            const response = await PaymentService.createPayment(req.body);
@@ -60,9 +60,37 @@ async function paymentWebhook(req, res) {
    }
 }
 
+ async function cancelPayment(req, res) {
+   try{
+      const {orderId}= req.body;
+      if(!orderId){
+          ErrorResponse.message="Order Id Missing"
+          ErrorResponse.error="Order id is missing"
+        return res
+                 .status(StatusCodes.BAD_REQUEST)
+                 .json(ErrorResponse)
+
+
+      }
+      logger.info("payment cancelled for  this order ",orderId)
+       const response = await PaymentService.cancelPayment(orderId);
+       SuccessResponse.data = response;
+        return res
+                 .status(StatusCodes.OK)
+                 .json(SuccessResponse)
+
+   }catch(error){
+    ErrorResponse.error = error.explanation || 'Something went wrong';
+    return  res
+                .status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR)
+                .json(ErrorResponse)
+   }
+}
+
  module.exports={
     createPayment,
     verifyPayment,
-    paymentWebhook
+    paymentWebhook,
+     cancelPayment,
 
  }

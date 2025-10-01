@@ -3,7 +3,7 @@
 export const  planData=[
     {
         plan:"starter",
-        name:"pandey",
+        name:"priyanshu pandey",
         amount:"100",
         email:"prince678p@gmail.com",
         description:"starter payment",
@@ -12,7 +12,7 @@ export const  planData=[
     },
        {
         plan:"growth",
-         name:"pandey",
+         name:"priyanshu pandey",
         amount:"200",
         email:"prince678p@gmail.com",
         description:"growth payment",
@@ -21,7 +21,7 @@ export const  planData=[
     },
        {
         plan:"pro",
-         name:"pandey",
+         name:"priyanshu pandey",
         amount:"300",
         email:"prince678p@gmail.com",
         description:"pro payment",
@@ -30,7 +30,7 @@ export const  planData=[
     },
        {
         plan:"elite",
-         name:"pandey",
+         name:"priyanshu pandey",
         amount:"400",
         email:"prince678p@gmail.com",
         description:"elite payment",
