@@ -59,17 +59,16 @@ async function decodeUrl(req, res) {
         console.log(response)
        
          
-           SuccessResponse.message = "Suceessfully url generated";
+           SuccessResponse.message = "Suceessfully Data Reterived";
            SuccessResponse.data={
-             url:response
+             userData:response
            } 
            return res
                     .status(StatusCodes.OK)
                     .json(SuccessResponse)
 
       }catch(error){
-       ErrorResponse.error =  'Something went wrong';
-       console.log(error)
+       ErrorResponse.error = error.message;
        return  res
                    .status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR)
                    .json(ErrorResponse)

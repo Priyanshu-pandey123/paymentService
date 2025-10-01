@@ -1,10 +1,10 @@
 const crypto = require('crypto');
-const AppError= require("../utils/errors/app-error")
-
+const AppError = require("../utils/errors/app-error");
+const StatusCodes= require("http-status-codes")
 
 const SECRET_KEY = "your_super_secret_key";
 
-// Encrypt data
+// Encrypt data (URL-safe base64)
 function encryptData(data) {
   const iv = crypto.randomBytes(16);
   const cipher = crypto.createCipheriv(
@@ -12,24 +12,37 @@ function encryptData(data) {
     crypto.createHash("sha256").update(SECRET_KEY).digest(),
     iv
   );
+
   let encrypted = cipher.update(JSON.stringify(data), "utf8", "base64");
   encrypted += cipher.final("base64");
-  return iv.toString("base64") + ":" + encrypted;
+
+  // Convert to URL-safe base64
+  const ivSafe = iv.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, '');
+  const encryptedSafe = encrypted.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, '');
+  
+  return `${ivSafe}:${encryptedSafe}`;
 }
 
-// Decrypt data
+// Decrypt data (handle URL-safe base64)
 function decryptData(encryptedData) {
-  const [ivBase64, data] = encryptedData.split(":");
-  const iv = Buffer.from(ivBase64, "base64");
+  let [ivSafe, encryptedSafe] = encryptedData.split(":");
 
+  if (!ivSafe || !encryptedSafe) throw new AppError("Invalid encrypted data format", 400);
+
+  // Convert back to normal base64
+  ivSafe = ivSafe.replace(/-/g, "+").replace(/_/g, "/").padEnd(ivSafe.length + (4 - ivSafe.length % 4) % 4, "=");
+  encryptedSafe = encryptedSafe.replace(/-/g, "+").replace(/_/g, "/").padEnd(encryptedSafe.length + (4 - encryptedSafe.length % 4) % 4, "=");
+
+  const iv = Buffer.from(ivSafe, "base64");
   const decipher = crypto.createDecipheriv(
     "aes-256-cbc",
     crypto.createHash("sha256").update(SECRET_KEY).digest(),
     iv
   );
 
-  let decrypted = decipher.update(data, "base64", "utf8");
+  let decrypted = decipher.update(encryptedSafe, "base64", "utf8");
   decrypted += decipher.final("utf8");
+
   return JSON.parse(decrypted);
 }
 
@@ -38,12 +51,12 @@ function createHmac(data) {
   return crypto.createHmac("sha256", SECRET_KEY).update(data).digest("hex");
 }
 
-// Generate a secure URL
+// Generate secure URL
 async function generateUrl(req) {
   const { name, email, contact, userId, domainName } = req.body;
 
   if (!name || !email || !contact || !userId || !domainName) {
-    throw new Error("All fields are required");
+    throw new AppError("All fields are required", 400);
   }
 
   const payload = { name, email, contact, userId, domainName };
@@ -56,9 +69,13 @@ async function generateUrl(req) {
 
 // Decode and verify URL data
 function decodeUrl(data, sig) {
-  const expectedSig = createHmac(data);
-   if (!data || !sig) throw new AppError("Missing data or signature", 400);
+  if (!data || !sig) throw new AppError("Missing data or signature", 400);
 
+  // Verify HMAC
+  const expectedSig = createHmac(data);
+  if (expectedSig !== sig) throw new AppError("Invalid signature! Data may have been tampered with.", StatusCodes.UNAUTHORIZED);
+
+  // Decrypt payload
   return decryptData(decodeURIComponent(data));
 }
 
