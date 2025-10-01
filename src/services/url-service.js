@@ -42,7 +42,6 @@ function decryptData(encryptedData) {
 
   let decrypted = decipher.update(encryptedSafe, "base64", "utf8");
   decrypted += decipher.final("utf8");
-
   return JSON.parse(decrypted);
 }
 
@@ -70,7 +69,7 @@ async function generateUrl(req) {
 // Decode and verify URL data
 function decodeUrl(data, sig) {
   if (!data || !sig) throw new AppError("Missing data or signature", 400);
-
+  console.log(data, sig ,' from  the decode ')
   // Verify HMAC
   const expectedSig = createHmac(data);
   if (expectedSig !== sig) throw new AppError("Invalid signature! Data may have been tampered with.", StatusCodes.UNAUTHORIZED);

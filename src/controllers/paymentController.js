@@ -6,10 +6,6 @@ const {PaymentService}= require("../services")
 
  async function createPayment(req, res) {
       try{
-
-    
-
-            
            const response = await PaymentService.createPayment(req.body);
            SuccessResponse.data = response.order;
            return res
@@ -45,9 +41,6 @@ const {PaymentService}= require("../services")
    }
 }
 async function paymentWebhook(req, res) {
-
-   console.log("webhook is called")
-
    try{
        await PaymentService.paymentWebhook(req, res);
      
