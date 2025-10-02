@@ -17,6 +17,16 @@ module.exports = (sequelize) => {
         allowNull: false,
         primaryKey: true
       },
+
+        userId:{
+       type: DataTypes.UUID,
+        allowNull: false,
+       
+      },
+       userDomain:{
+        type: DataTypes.STRING(350),
+        allowNull: false
+      },
       name: {
         type: DataTypes.STRING(100),
         allowNull: false

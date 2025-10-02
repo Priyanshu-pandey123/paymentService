@@ -9,6 +9,14 @@ module.exports = {
         allowNull: false,
         primaryKey: true
       },
+      userId: {
+        type: Sequelize.STRING,  
+        allowNull: false
+      },
+       userDomain:{
+        type: Sequelize.STRING(350),
+        allowNull: false
+      },
 
       name: {
         type: Sequelize.STRING(100),
@@ -94,16 +102,17 @@ module.exports = {
         defaultValue: {}
       },
 
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP')
-      }
+  createdAt: {
+  allowNull: false,
+  type: Sequelize.DATE,
+  defaultValue: Sequelize.literal("CONVERT_TZ(CURRENT_TIMESTAMP, '+00:00', '+05:30')")
+},
+updatedAt: {
+  allowNull: false,
+  type: Sequelize.DATE,
+  defaultValue: Sequelize.literal("CONVERT_TZ(CURRENT_TIMESTAMP, '+00:00', '+05:30') ON UPDATE CURRENT_TIMESTAMP")
+}
+
     });
   },
 

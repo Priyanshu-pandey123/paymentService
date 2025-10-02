@@ -74,7 +74,7 @@ function decodeUrl(data, sig) {
   const expectedSig = createHmac(data);
   if (expectedSig !== sig) throw new AppError("Invalid signature! Data may have been tampered with.", StatusCodes.UNAUTHORIZED);
 
-  // Decrypt payload
+
   return decryptData(decodeURIComponent(data));
 }
 
