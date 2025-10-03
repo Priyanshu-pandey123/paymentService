@@ -23,9 +23,16 @@ module.exports = (sequelize) => {
         allowNull: false,
        
       },
-       userDomain:{
+        userDomainUrl: {
         type: DataTypes.STRING(350),
-        allowNull: false
+        allowNull: false,
+        validate: {
+          isUrl: true   
+        }
+      },
+      ctlId:{
+          type: DataTypes.STRING(100),
+           allowNull: false
       },
       name: {
         type: DataTypes.STRING(100),
@@ -47,7 +54,7 @@ module.exports = (sequelize) => {
       },
       amount: {
         type: DataTypes.DECIMAL(15, 2),
-        allowNull: false
+        allowNull: true
       },
       currency: {
         type: DataTypes.STRING(10),

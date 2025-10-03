@@ -6,9 +6,18 @@ const {PaymentService}= require("../services")
 
  async function createPayment(req, res) {
       try{
+         
+       const {plan , userData }= req.body;
+        if(!plan, !userData){
+          
+         ErrorResponse.message="Missing Data ";
+         ErrorResponse.error="Missing Data "
+         return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse)
+        }
+
            const response = await PaymentService.createPayment(req.body);
            SuccessResponse.data = response.order;
-           return res
+           return res 
                     .status(StatusCodes.OK)
                     .json(SuccessResponse)
 

@@ -20,7 +20,8 @@ const razorpay = new Razorpay({
 
 async function createPayment(data) {
     try {
-       const { plan }= data; 
+       const { plan , userData }= data; 
+       const {name, email, contact , userId,domainName,ctlId}=userData;
        
     if (!plan) {   
         logger.error("some feild are missig ");
@@ -33,7 +34,7 @@ async function createPayment(data) {
       logger.error("Invalid plan selected", { plan });
       throw new AppError("Invalid plan selected", StatusCodes.BAD_REQUEST);
     }
-      const { amount, email, description, contact, plan: planName , name} = selectedPlan;
+      const { amount, plan: planName ,description} = selectedPlan;
       const options = {
       amount: amount,
       currency: "INR",
@@ -51,17 +52,16 @@ async function createPayment(data) {
             name,
             email,
             contact,
+            userId,
+            userDomainUrl:domainName,
             amount: amount, 
             description,
             order_id: order.id,
             payment_status: "PENDING",
-            plan:plan
+            plan:plan,
+            ctlId
         }
       ) 
-
-  
-
-      
       logger.info("Order created", { orderId: order.id, amount: options.amount });
       return { order, payment };
        

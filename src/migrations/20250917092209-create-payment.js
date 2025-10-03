@@ -13,14 +13,21 @@ module.exports = {
         type: Sequelize.STRING,  
         allowNull: false
       },
-       userDomain:{
+     userDomainUrl: {
         type: Sequelize.STRING(350),
+        allowNull: false,
+        validate: {
+          isUrl: true   
+        }
+      },
+      ctlId:{
+         type: Sequelize.STRING(100),
         allowNull: false
       },
-
       name: {
-        type: Sequelize.STRING(100),
+            type: Sequelize.STRING(100),
         allowNull: false
+     
       },
         plan: {
       type: Sequelize.ENUM('STARTER', 'GROWTH', 'PRO', 'ELITE'),
@@ -38,7 +45,7 @@ module.exports = {
       },
       amount: {
         type: Sequelize.DECIMAL(15, 2),
-        allowNull: false
+        allowNull: true
       },
       currency: {
         type: Sequelize.STRING(10),
@@ -102,16 +109,17 @@ module.exports = {
         defaultValue: {}
       },
 
-  createdAt: {
+   createdAt: {
   allowNull: false,
-  type: Sequelize.DATE,
-  defaultValue: Sequelize.literal("CONVERT_TZ(CURRENT_TIMESTAMP, '+00:00', '+05:30')")
+  type: Sequelize.DATE,     
+  defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") 
 },
 updatedAt: {
   allowNull: false,
   type: Sequelize.DATE,
-  defaultValue: Sequelize.literal("CONVERT_TZ(CURRENT_TIMESTAMP, '+00:00', '+05:30') ON UPDATE CURRENT_TIMESTAMP")
+  defaultValue: Sequelize.literal("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
 }
+
 
     });
   },

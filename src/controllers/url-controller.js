@@ -8,12 +8,13 @@ const { StatusCodes } = require('http-status-codes');
  async function getEncryptedUrl(req, res) {
       try{
 
-       const {email , name , contact, userId, domainName} = req.body;
-       console.log(email,name, contact, userId || domainName) 
-       if(!email || !name || !contact  || !userId || !domainName){
+       const {email , name , contact, userId, domainName,ctlId} = req.body;
+   
+       if(!email || !name || !contact  || !userId || !domainName || !ctlId){
 
- 
-         
+     console.log(req.body,'fromthe url controller ')
+
+
         ErrorResponse.message="Misssing Feild  all data  : email, name , contact, userId, domainName  needed "
 
         return res
@@ -23,7 +24,7 @@ const { StatusCodes } = require('http-status-codes');
 
 
         const response =await UrlService.generateUrl(req)
-        console.log(response)
+
        
          
            SuccessResponse.message = "Suceessfully url generated";
@@ -56,7 +57,7 @@ async function decodeUrl(req, res) {
 
 
         const response =await UrlService.decodeUrl(data, sig)
-        console.log(response)
+
        
          
            SuccessResponse.message = "Suceessfully Data Reterived";

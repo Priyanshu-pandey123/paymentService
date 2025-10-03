@@ -30,7 +30,7 @@ const {PaymentDashService}= require("../services")
 
       try{            
         const { id, status } = req.query;
-        console.log(id, status, " from the controller")
+
            const response = await PaymentDashService.getPaymentByUserId({id,status});
           
            SuccessResponse.data = response;

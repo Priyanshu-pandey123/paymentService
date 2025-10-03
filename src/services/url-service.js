@@ -1,8 +1,9 @@
 const crypto = require('crypto');
 const AppError = require("../utils/errors/app-error");
 const StatusCodes= require("http-status-codes")
-
+const {UrlRepository}= require("../repositories")
 const SECRET_KEY = "your_super_secret_key";
+
 
 // Encrypt data (URL-safe base64)
 function encryptData(data) {
@@ -22,6 +23,8 @@ function encryptData(data) {
   
   return `${ivSafe}:${encryptedSafe}`;
 }
+
+const urlRepository = new UrlRepository()
 
 // Decrypt data (handle URL-safe base64)
 function decryptData(encryptedData) {
@@ -52,28 +55,28 @@ function createHmac(data) {
 
 // Generate secure URL
 async function generateUrl(req) {
-  const { name, email, contact, userId, domainName } = req.body;
+  const { name, email, contact, userId, domainName,ctlId } = req.body;
 
-  if (!name || !email || !contact || !userId || !domainName) {
+  if (!name || !email || !contact || !userId || !domainName || !ctlId) {
     throw new AppError("All fields are required", 400);
   }
 
-  const payload = { name, email, contact, userId, domainName };
+  const payload = { name, email, contact, userId, domainName ,ctlId};
   const encryptedPayload = encodeURIComponent(encryptData(payload));
   const signature = createHmac(encryptedPayload);
 
-  const frontendUrl = "https://372w16mm-5173.inc1.devtunnels.ms/";
+  const frontendUrl = "https://372w16mm-5174.inc1.devtunnels.ms/";
   return `${frontendUrl}?data=${encryptedPayload}&sig=${signature}`;
 }
 
 // Decode and verify URL data
-function decodeUrl(data, sig) {
+ async function decodeUrl(data, sig) {
   if (!data || !sig) throw new AppError("Missing data or signature", 400);
-  console.log(data, sig ,' from  the decode ')
-  // Verify HMAC
+
+
   const expectedSig = createHmac(data);
   if (expectedSig !== sig) throw new AppError("Invalid signature! Data may have been tampered with.", StatusCodes.UNAUTHORIZED);
-
+  // const response = await urlRepository.createUserData(decryptData(decodeURIComponent(data)))
 
   return decryptData(decodeURIComponent(data));
 }
