@@ -65,7 +65,7 @@ async function generateUrl(req) {
   const encryptedPayload = encodeURIComponent(encryptData(payload));
   const signature = createHmac(encryptedPayload);
 
-  const frontendUrl = "https://372w16mm-5174.inc1.devtunnels.ms/";
+  const frontendUrl = "http://localhost:5173/";
   return `${frontendUrl}?data=${encryptedPayload}&sig=${signature}`;
 }
 
