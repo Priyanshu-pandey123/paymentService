@@ -1,11 +1,11 @@
 const { createLogger, format, transports } = require("winston");
 const path = require("path");
 
-// Resolve log file to project root to avoid permission issues (was "/payment.log")
+
 const logFilePath = path.resolve(__dirname, "../../payment.log");
 
 const logger = createLogger({
-  level: "info", // levels: error, warn, info, http, verbose, debug, silly
+  level: "info", 
   format: format.combine(
     format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
     format.colorize(),
@@ -24,8 +24,8 @@ const logger = createLogger({
     new transports.File({
       filename: logFilePath,
       level: "info",
-      maxsize: 5 * 1024 * 1024, // 5MB per file
-      maxFiles: 7, // keep last 7 rotated files
+      maxsize: 5 * 1024 * 1024, 
+      maxFiles: 7, 
       tailable: true,
     }),
   ],
