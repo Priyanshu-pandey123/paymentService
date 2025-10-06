@@ -30,7 +30,7 @@ module.exports = (sequelize) => {
           isUrl: true   
         }
       },
-      ctlId:{
+      ctclId:{
           type: DataTypes.STRING(100),
            allowNull: false
       },

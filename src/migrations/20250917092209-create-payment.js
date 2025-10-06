@@ -20,7 +20,7 @@ module.exports = {
           isUrl: true   
         }
       },
-      ctlId:{
+      ctclId:{
          type: Sequelize.STRING(100),
         allowNull: false
       },
