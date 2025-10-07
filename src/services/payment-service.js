@@ -21,8 +21,9 @@ const razorpay = new Razorpay({
 async function createPayment(data) {
     try {
        const { plan , userData }= data; 
-       const {name, email, contact , userId,domainName,ctlId}=userData;
+       const {name, email, contact , userId,domainName,ctclId}=userData;
        
+
     if (!plan) {   
         logger.error("some feild are missig ");
         throw new AppError("select the plan for payment", StatusCodes.BAD_REQUEST);
@@ -59,10 +60,11 @@ async function createPayment(data) {
             order_id: order.id,
             payment_status: "PENDING",
             plan:plan,
-            ctlId
+            ctclId
         }
-      ) 
-      logger.info("Order created", { orderId: order.id, amount: options.amount });
+      );
+    //  logger.info("Order create for ", { userData?.userId }, { orderId: order.id, amount: options.amount });
+
       return { order, payment };
        
     } catch(error) {
@@ -132,10 +134,10 @@ async function paymentWebhook(req, res) {
       return res.status(400).json({ success: false, error: "Signature missing" });
     }
 
-    console.log("******************************* Webhook Data *******************************");
+    // console.log("******************************* Webhook Data *******************************");
     console.log(JSON.stringify(req.body, null, 2));
     logger.info("webhook  data ",JSON.stringify(req.body ));
-    console.log("***************************************************************************");
+    // console.log("***************************************************************************");
 
     const rawBody = JSON.stringify(req.body);
     const isWebhookValid = validateWebhookSignature(

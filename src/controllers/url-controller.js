@@ -8,9 +8,9 @@ const { StatusCodes } = require('http-status-codes');
  async function getEncryptedUrl(req, res) {
       try{
 
-       const {email , name , contact, userId, domainName,ctlId} = req.body;
+       const {email , name , contact, userId, domainName,ctclId} = req.body;
    
-       if(!email || !name || !contact  || !userId || !domainName || !ctlId){
+       if(!email || !name || !contact  || !userId || !domainName || !ctclId){
 
      console.log(req.body,'fromthe url controller ')
 
