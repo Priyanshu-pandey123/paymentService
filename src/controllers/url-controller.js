@@ -44,31 +44,29 @@ const { StatusCodes } = require('http-status-codes');
       }
  }
 async function decodeUrl(req, res) {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
       try{
 
        const {data, sig} = req.body;
-       if(!data || !sig) {
-        ErrorResponse.message="Hey  bro you are not get complete data  "
+    logger.info("Decode URL request received", { ip, hasData: Boolean(data), hasSig: Boolean(sig) });
 
-        return res
-                .status(StatusCodes.BAD_REQUEST)
-                .json(ErrorResponse)
-       }
-
-
+    if (!data || !sig) {
+      ErrorResponse.message = "Incomplete data received";
+      logger.warn("Decode URL failed - missing data or signature", { ip, body: req.body });
+      return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+    }
         const response =await UrlService.decodeUrl(data, sig)
-
-       
-         
            SuccessResponse.message = "Suceessfully Data Reterived";
            SuccessResponse.data={
              userData:response
            } 
+         logger.info("Decode URL successful", { ip, userData: response?.userId || "N/A" });
            return res
                     .status(StatusCodes.OK)
                     .json(SuccessResponse)
 
       }catch(error){
+        logger.error("Decode URL error", { ip, error: error.message, stack: error.stack });
        ErrorResponse.error = error.message;
        return  res
                    .status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR)

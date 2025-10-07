@@ -2,10 +2,15 @@ const crypto = require('crypto');
 const AppError = require("../utils/errors/app-error");
 const StatusCodes= require("http-status-codes")
 const {UrlRepository}= require("../repositories")
-const SECRET_KEY = "your_super_secret_key";
+const {logger}= require("../config")
+const {ServerConfig}= require('../config')
 
 
-// Encrypt data (URL-safe base64)
+
+const SECRET_KEY=ServerConfig.SECRET_KEY;
+
+
+
 function encryptData(data) {
   const iv = crypto.randomBytes(16);
   const cipher = crypto.createCipheriv(
@@ -17,7 +22,7 @@ function encryptData(data) {
   let encrypted = cipher.update(JSON.stringify(data), "utf8", "base64");
   encrypted += cipher.final("base64");
 
-  // Convert to URL-safe base64
+
   const ivSafe = iv.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, '');
   const encryptedSafe = encrypted.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, '');
   
@@ -26,13 +31,13 @@ function encryptData(data) {
 
 const urlRepository = new UrlRepository()
 
-// Decrypt data (handle URL-safe base64)
+
 function decryptData(encryptedData) {
   let [ivSafe, encryptedSafe] = encryptedData.split(":");
 
   if (!ivSafe || !encryptedSafe) throw new AppError("Invalid encrypted data format", 400);
 
-  // Convert back to normal base64
+
   ivSafe = ivSafe.replace(/-/g, "+").replace(/_/g, "/").padEnd(ivSafe.length + (4 - ivSafe.length % 4) % 4, "=");
   encryptedSafe = encryptedSafe.replace(/-/g, "+").replace(/_/g, "/").padEnd(encryptedSafe.length + (4 - encryptedSafe.length % 4) % 4, "=");
 
@@ -65,20 +70,31 @@ async function generateUrl(req) {
   const encryptedPayload = encodeURIComponent(encryptData(payload));
   const signature = createHmac(encryptedPayload);
 
-  const frontendUrl = "http://localhost:5173/";
+  // const frontendUrl = "http://localhost:5173/";
+  const frontendUrl= ServerConfig.FRONTEND_URL;
   return `${frontendUrl}?data=${encryptedPayload}&sig=${signature}`;
 }
 
 // Decode and verify URL data
  async function decodeUrl(data, sig) {
-  if (!data || !sig) throw new AppError("Missing data or signature", 400);
+ logger.info("decodeUrl service invoked", { hasData: Boolean(data), hasSig: Boolean(sig) });
+
+    if (!data || !sig) {
+      logger.warn("Missing data or signature in decodeUrl", { dataPresent: Boolean(data), sigPresent: Boolean(sig) });
+      throw new AppError("Missing data or signature", StatusCodes.BAD_REQUEST);
+    }
+
 
 
   const expectedSig = createHmac(data);
-  if (expectedSig !== sig) throw new AppError("Invalid signature! Data may have been tampered with.", StatusCodes.UNAUTHORIZED);
-  // const response = await urlRepository.createUserData(decryptData(decodeURIComponent(data)))
+  if (expectedSig !== sig) {
+      logger.warn("Invalid signature detected in decodeUrl", { dataSnippet: data.slice(0, 50) });
+      throw new AppError("Invalid signature! Data may have been tampered with.", StatusCodes.UNAUTHORIZED);
+    }
+    const decryptedData = decryptData(decodeURIComponent(data));
+  logger.info("decodeUrl successfully decrypted data", { ip, decryptedDataSnippet: JSON.stringify(decryptedData).slice(0, 100) });
 
-  return decryptData(decodeURIComponent(data));
+  return decryptData;
 }
 
 module.exports = {
