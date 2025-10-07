@@ -83,31 +83,29 @@ async function paymentWebhook(req, res) {
 }
 
  async function cancelPayment(req, res) {
-  
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
    try{
       const {orderId}= req.body;
-      if(!orderId){
-          ErrorResponse.message="Order Id Missing"
-          ErrorResponse.error="Order id is missing"
-        return res
-                 .status(StatusCodes.BAD_REQUEST)
-                 .json(ErrorResponse)
-
-
-      }
-      logger.info("payment cancelled for  this order ",orderId)
+      
+        if (!orderId) {
+      ErrorResponse.message = "Order Id Missing";
+      ErrorResponse.error = "Order id is missing";
+      logger.warn("Payment cancellation failed - missing orderId", { ip, body: req.body });
+      return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+    }
+        logger.info("Cancelling payment", { ip, orderId });
+     
        const response = await PaymentService.cancelPayment(orderId);
        SuccessResponse.data = response;
+           logger.info("Payment cancelled successfully", { ip, orderId, response });
         return res
                  .status(StatusCodes.OK)
                  .json(SuccessResponse)
 
    }catch(error){
-  logger.error('Webhook controller error', { ip, error: error.message, stack: error.stack });
+    logger.error("Payment cancellation error", { ip, error: error.message, stack: error.stack });
     ErrorResponse.error = error.explanation || 'Something went wrong';
-    return res
-      .status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR)
-      .json(ErrorResponse);
+    return res.status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
    }
 }
 

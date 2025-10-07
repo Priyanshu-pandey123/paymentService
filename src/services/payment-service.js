@@ -237,12 +237,12 @@ async function paymentWebhook(req, res) {
 async function cancelPayment(orderId) {
  try {
 
-
-  logger.info(" the paynment cancelled service for orderId ",orderId)
+ logger.info("Cancelling payment in service", { orderId });
     const updates = {
      payment_status:"CANCELLED"
     }
    const response = await paymentRepository.updatePaymentByOrderId(orderId,updates)
+       logger.info("Payment cancelled successfully in service", { orderId, updatedRecord: response });
    return response;
 
 
@@ -252,8 +252,8 @@ async function cancelPayment(orderId) {
 
   };
  } catch(error) {
-  logger.error("Payment verify error", { error: error.message, stack: error.stack });
-  throw error;
+    logger.error("Payment cancellation service error", { orderId, error: error.message, stack: error.stack });
+    throw error;
  }
 }
 
