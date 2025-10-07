@@ -14,13 +14,11 @@ class PaymentDashRepository extends CrudRepository {
          return  allPayment;
        
     } 
-    async getPaymentByUserId(filters = {}) {
-    const { uuid, status } = filters;
-     const whereCondition = {};
+    async getPaymentByUserId(userId) {
 
-    if (status) whereCondition.payment_status = status;
-    const userPayments = await Payment.findAll({
-      where: whereCondition,
+
+    const userPayments = await Payment.findOne({
+      where: {userId},
       order: [["createdAt", "DESC"]],
     });
 

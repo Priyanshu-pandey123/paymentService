@@ -31,10 +31,10 @@ async function getAllPayment(limit,page) {
     }
     
 }
-async function getPaymentByUserId(filter) {
+async function getPaymentByUserId(userId) {
     try {
 
-      const response =await paymentDashRepository.getPaymentByUserId(filter); 
+      const response =await paymentDashRepository.getPaymentByUserId(userId); 
       
       return  response;
        

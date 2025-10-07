@@ -29,9 +29,9 @@ const {PaymentDashService}= require("../services")
   async function getPaymentByUserId(req, res) {
 
       try{            
-        const { id, status } = req.query;
+        const { userId } = req.query;
 
-           const response = await PaymentDashService.getPaymentByUserId({id,status});
+           const response = await PaymentDashService.getPaymentByUserId(userId);
           
            SuccessResponse.data = response;
            return res
