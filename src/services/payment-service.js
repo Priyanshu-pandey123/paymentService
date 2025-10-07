@@ -8,7 +8,8 @@ const AppError = require('../utils/errors/app-error');
 const crypto = require('crypto');
 // const {Enums} = require('../utils/common');
  const {planData}= require("../utils/plan")
-const {logger,RazorConfig}= require('../config')
+const {logger,RazorConfig}= require('../config');
+const { ErrorResponse } = require('../utils/common');
 
 
  const paymentRepository=new PaymentRepository();
@@ -20,19 +21,18 @@ const razorpay = new Razorpay({
 
 async function createPayment(data) {
     try {
-       const { plan , userData }= data; 
-       const {name, email, contact , userId,domainName,ctclId}=userData;
-       
+      const { plan, userData } = data;
+    const { name, email, contact, userId, domainName, ctclId } = userData || {};
 
-    if (!plan || !userData) {   
-        logger.error("some feild are missig ");
-        throw new AppError("select the plan for payment", StatusCodes.BAD_REQUEST);
-      }
 
+    if (!plan || !userData) {
+      logger.error("Payment creation failed - missing fields", { ip, plan, userData });
+      throw new AppError("Select the plan for payment", StatusCodes.BAD_REQUEST);
+    }
      const selectedPlan = planData.find((p) => p.plan === plan);
 
-    if (!selectedPlan) {
-      logger.error("Invalid plan selected", { plan });
+       if (!selectedPlan) {
+      logger.error("Invalid plan selected", { ip, plan });
       throw new AppError("Invalid plan selected", StatusCodes.BAD_REQUEST);
     }
       const { amount, plan: planName ,description} = selectedPlan;
@@ -63,13 +63,24 @@ async function createPayment(data) {
             ctclId
         }
       );
-     logger.info("Order create for ", {userId},{ orderId: order.id, amount: options.amount });
+   
+    logger.info("Payment order created successfully", {
+      userId,
+      orderId: order.id,
+      amount,
+      plan,
+    });
 
       return { order, payment };
        
     } catch(error) {
-      console.log(error)
-      throw error;
+     logger.error("Payment creation error", { 
+      ip: data?.ip || "unknown", 
+      userId: data?.userData?.userId, 
+      error: error.message, 
+      stack: error.stack 
+    });
+    throw error;
     }
     
 }
@@ -79,7 +90,7 @@ async function verifyPayment(data) {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = data;
 
 
-  logger.info()
+  logger.info("Verify payment request received", { orderId: razorpay_order_id, paymentId: razorpay_payment_id });
 
   const dataToSign = `${razorpay_order_id}|${razorpay_payment_id}`;
 
@@ -95,7 +106,6 @@ async function verifyPayment(data) {
       logger.warn("Invalid payment signature detected", { orderId: razorpay_order_id, paymentId: razorpay_payment_id });
     }
 
-
   const updates = {
     payment_id: razorpay_payment_id,
     payment_verified: isValid ? "YES" : "NO"
@@ -103,11 +113,12 @@ async function verifyPayment(data) {
 
   const updatedPayment = await paymentRepository.updatePaymentByOrderId(razorpay_order_id, updates);
 
-     if (!updatedPayment) {
+       if (!updatedPayment) {
+      logger.error("Failed to update payment record", { orderId: razorpay_order_id });
       throw new AppError("Failed to update payment record", StatusCodes.INTERNAL_SERVER_ERROR);
     }
 
-  logger.info(isValid,updatedPayment )
+    logger.info("Payment record updated", { orderId: razorpay_order_id, payment: updatedPayment });
 
   return {
     success: isValid,
@@ -115,8 +126,8 @@ async function verifyPayment(data) {
     payment: updatedPayment
   };
  } catch(error) {
-  logger.error("Payment verify error", { error: error.message, stack: error.stack });
-  throw error;
+   logger.error("Payment verification error", { orderId: razorpay_order_id, error: error.message, stack: error.stack });
+    throw error;
  }
 }
 
@@ -132,18 +143,22 @@ function validateWebhookSignature(body, signature, secret) {
 
 
 async function paymentWebhook(req, res) {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   try {
     const webhookSignature = req.get("X-Razorpay-Signature");
-    logger.info("Webhook invoked", { hasSignature: Boolean(webhookSignature) });
+    logger.info("Webhook invoked", { ip, hasSignature: Boolean(webhookSignature) });
 
-    if (!webhookSignature) {
-      logger.warn("Webhook signature missing");
-      return res.status(400).json({ success: false, error: "Signature missing" });
+   if (!webhookSignature) {
+      logger.warn("Webhook signature missing", { ip });
+    ErrorResponse.message="Signature missing"
+      return res
+              .status(StatusCodes.BAD_REQUEST)
+              .json(ErrorResponse)
     }
 
     // console.log("******************************* Webhook Data *******************************");
-    console.log(JSON.stringify(req.body, null, 2));
-    logger.info("webhook  data ",JSON.stringify(req.body ));
+    // console.log(JSON.stringify(req.body, null, 2));
+    // logger.info("webhook  data ",JSON.stringify(req.body ));
     // console.log("***************************************************************************");
 
     const rawBody = JSON.stringify(req.body);
@@ -161,8 +176,9 @@ async function paymentWebhook(req, res) {
     const payload = req.body;
     const paymentDetails = payload?.payload?.payment?.entity;
 
+
     if (!paymentDetails) {
-      logger.warn("No payment details found in webhook payload");
+      logger.warn("No payment details found in webhook payload", { ip });
       return res.status(400).json({ success: false, error: "No payment details found" });
     }
 
@@ -197,19 +213,20 @@ async function paymentWebhook(req, res) {
 
 
     await paymentRepository.updatePaymentByOrderId(paymentDetails.order_id, updates);
-
-    logger.info("Webhook processed", {
-      event: payload?.event,
-      paymentId: paymentDetails?.id,
-      orderId: paymentDetails?.order_id,
-      amount: paymentDetails?.amount,
+    logger.info("Webhook processed successfully", {
+      ip,
+      event: payload.event,
+      paymentId: paymentDetails.id,
+      orderId: paymentDetails.order_id,
+      amount: paymentDetails.amount,
       status: updates.payment_status
     });
 
     return res.status(200).json({ success: true });
 
   } catch (error) {
-    logger.error("Webhook handler error", {
+   logger.error("Webhook handler error", {
+      ip,
       error: error.message,
       stack: error.stack
     });
