@@ -92,9 +92,9 @@ async function generateUrl(req) {
       throw new AppError("Invalid signature! Data may have been tampered with.", StatusCodes.UNAUTHORIZED);
     }
     const decryptedData = decryptData(decodeURIComponent(data));
-  logger.info("decodeUrl successfully decrypted data", { ip, decryptedDataSnippet: JSON.stringify(decryptedData).slice(0, 100) });
+  logger.info("decodeUrl successfully decrypted data", {  decryptedDataSnippet: JSON.stringify(decryptedData).slice(0, 100) });
 
-  return decryptData;
+  return decryptedData;
 }
 
 module.exports = {
