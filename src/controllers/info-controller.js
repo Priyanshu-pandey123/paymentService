@@ -8,15 +8,8 @@ const info = (req, res) => {
         data: {},
     });
 }
-const harshit = (req, res) => {
-    return res.status(StatusCodes.OK).json({
-        success: true,
-        message: 'Harshit is live',
-        error: {},
-        data: {},
-    });
-}
+
 module.exports = {
     info,
-    harshit
+  
 }

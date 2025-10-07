@@ -24,7 +24,7 @@ async function createPayment(data) {
        const {name, email, contact , userId,domainName,ctclId}=userData;
        
 
-    if (!plan) {   
+    if (!plan || !userData) {   
         logger.error("some feild are missig ");
         throw new AppError("select the plan for payment", StatusCodes.BAD_REQUEST);
       }
@@ -63,7 +63,7 @@ async function createPayment(data) {
             ctclId
         }
       );
-    //  logger.info("Order create for ", { userData?.userId }, { orderId: order.id, amount: options.amount });
+     logger.info("Order create for ", {userId},{ orderId: order.id, amount: options.amount });
 
       return { order, payment };
        
@@ -77,11 +77,9 @@ async function createPayment(data) {
 async function verifyPayment(data) {
  try {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = data;
-  if(!razorpay_order_id || !razorpay_payment_id || !razorpay_signature){
-    throw new AppError("Missing required verification fields", StatusCodes.BAD_REQUEST);
-  }
 
-  logger.info("int  the paynment service")
+
+  logger.info()
 
   const dataToSign = `${razorpay_order_id}|${razorpay_payment_id}`;
 
@@ -91,6 +89,12 @@ async function verifyPayment(data) {
   .digest("hex");
 
   const isValid = expectedSignature === razorpay_signature;
+    if (isValid) {
+      logger.info("Payment verified successfully", { orderId: razorpay_order_id, paymentId: razorpay_payment_id });
+    } else {
+      logger.warn("Invalid payment signature detected", { orderId: razorpay_order_id, paymentId: razorpay_payment_id });
+    }
+
 
   const updates = {
     payment_id: razorpay_payment_id,
@@ -98,9 +102,12 @@ async function verifyPayment(data) {
   };
 
   const updatedPayment = await paymentRepository.updatePaymentByOrderId(razorpay_order_id, updates);
-  if(!updatedPayment){
-    throw new AppError("Payment order not found", StatusCodes.NOT_FOUND);
-  }
+
+     if (!updatedPayment) {
+      throw new AppError("Failed to update payment record", StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+
+  logger.info(isValid,updatedPayment )
 
   return {
     success: isValid,

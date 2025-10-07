@@ -33,14 +33,26 @@ const {PaymentService}= require("../services")
  async function verifyPayment(req, res) {
    try{
 
-    logger.info("payment  verify hit")
+
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+  if(!razorpay_order_id || !razorpay_payment_id || !razorpay_signature){
+    ErrorResponse.message="Missing Signature "
+    return res 
+            .status(StatusCodes.BAD_REQUEST)
+            .json(ErrorResponse)
+  }
 
          
        const response = await PaymentService.verifyPayment(req.body);
-       SuccessResponse.data = response;
-        return res
-                 .status(StatusCodes.OK)
-                 .json(SuccessResponse)
+      if (response.success) {
+      SuccessResponse.message = response.message;
+      SuccessResponse.data = response.payment;
+      return res.status(StatusCodes.OK).json(SuccessResponse);
+    } else {
+      ErrorResponse.message = response.message;
+      ErrorResponse.data = response.payment;
+      return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+    }
 
    }catch(error){
     ErrorResponse.error = error.explanation || 'Something went wrong';
