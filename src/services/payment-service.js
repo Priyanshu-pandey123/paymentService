@@ -32,7 +32,7 @@ async function createPayment(data) {
      const selectedPlan = planData.find((p) => p.plan === plan);
 
        if (!selectedPlan) {
-      logger.error("Invalid plan selected", { ip, plan });
+      logger.error("Invalid plan selected", { plan });
       throw new AppError("Invalid plan selected", StatusCodes.BAD_REQUEST);
     }
       const { amount, plan: planName ,description} = selectedPlan;

@@ -4,13 +4,7 @@ const StatusCodes= require("http-status-codes")
 const {UrlRepository}= require("../repositories")
 const {logger}= require("../config")
 const {ServerConfig}= require('../config')
-
-
-
 const SECRET_KEY=ServerConfig.SECRET_KEY;
-
-
-
 function encryptData(data) {
   const iv = crypto.randomBytes(16);
   const cipher = crypto.createCipheriv(
