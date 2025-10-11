@@ -1,0 +1,42 @@
+name: Deploy Payment Service
+
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to HostingRaja
+    runs-on: ubuntu-latest
+
+    steps:
+ 
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+
+      - name: Install Dependencies
+        run: npm install
+
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOSTINGRAJA_HOST }}      # Your server IP
+          username: ${{ secrets.HOSTINGRAJA_USER }}  # SSH username
+          key: ${{ secrets.HOSTINGRAJA_SSH_KEY }}    # Private SSH key
+          port: 22
+          script: |
+            cd /var/www/payment-service            # App folder on server
+            git pull origin main
+            npm install --production
+            pm2 restart all || pm2 start npm --name "payment-service" -- run start
+            echo "Payment Service deployed successfully!"
