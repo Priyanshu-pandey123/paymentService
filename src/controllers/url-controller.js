@@ -3,46 +3,72 @@ const {ErrorResponse,SuccessResponse}= require('../utils/common')
 const { StatusCodes } = require('http-status-codes');
  const {logger} = require("../config")
  const {UrlService}= require("../services")
+ const { extractIP } = require("../utils/helpers/ip-helper")
 
 
  async function getEncryptedUrl(req, res) {
-      try{
+    const ip = extractIP(req);
+    const {email, name, contact, userId, domainName, ctclId} = req.body;
+    
+    logger.info('URL Generation request received', { 
+        ip, 
+        userId,
+        domainName,
+        ctclId,
+        hasEmail: Boolean(email),
+        hasName: Boolean(name),
+        hasContact: Boolean(contact),
+        userAgent: req.headers['user-agent']
+    });
+    
+    try{
+        if(!email || !name || !contact || !userId || !domainName || !ctclId){
+            logger.warn('URL Generation failed - missing fields', { 
+                ip, 
+                userId,
+                missingFields: {
+                    email: !email,
+                    name: !name,
+                    contact: !contact,
+                    userId: !userId,
+                    domainName: !domainName,
+                    ctclId: !ctclId
+                }
+            });
+            
+            ErrorResponse.message="Missing Field: email, name, contact, userId, domainName needed"
+            return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+        }
 
-       const {email , name , contact, userId, domainName,ctclId} = req.body;
-   
-       if(!email || !name || !contact  || !userId || !domainName || !ctclId){
+        const response = await UrlService.generateUrl(req);
+        
+        logger.info('URL Generation successful', { 
+            ip, 
+            userId,
+            domainName,
+            ctclId,
+            urlGenerated: Boolean(response)
+        });
+        
+        SuccessResponse.message = "Successfully URL generated";
+        SuccessResponse.data = { url: response };
+        
+        return res.status(StatusCodes.OK).json(SuccessResponse);
 
-     console.log(req.body,'fromthe url controller ')
-
-
-        ErrorResponse.message="Misssing Feild  all data  : email, name , contact, userId, domainName  needed "
-
-        return res
-                .status(StatusCodes.BAD_REQUEST)
-                .json(ErrorResponse)
-       }
-
-
-        const response =await UrlService.generateUrl(req)
-
-       
-         
-           SuccessResponse.message = "Suceessfully url generated";
-           SuccessResponse.data={
-             url:response
-           } 
-           return res
-                    .status(StatusCodes.OK)
-                    .json(SuccessResponse)
-
-      }catch(error){
-       ErrorResponse.error =  'Something went wrong';
-       console.log(error)
-       return  res
-                   .status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR)
-                   .json(ErrorResponse)
-      }
- }
+    }catch(error){
+        logger.error('URL Generation error', { 
+            ip, 
+            userId,
+            domainName,
+            ctclId,
+            error: error.message, 
+            stack: error.stack
+        });
+        
+        ErrorResponse.error = 'Something went wrong';
+        return res.status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+    }
+}
 async function decodeUrl(req, res) {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
       try{
