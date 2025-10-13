@@ -9,7 +9,7 @@ on:
 jobs:
   deploy:
     name: Deploy to HostingRaja
-    runs-on: ubuntu-latest
+    runs-on: linux-latest
 
     steps:
  
@@ -20,13 +20,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
 
       - name: Install Dependencies
         run: npm install
 
 
+
+      # 5️⃣ Deploy to HostingRaja via SSH
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
