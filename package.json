@@ -4,7 +4,8 @@
   "description": "A basic started boilerplate project for node",
   "main": "index.js",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "dev":"nodemon src/index"
   },
   "author": "Sanket",
   "license": "ISC",
