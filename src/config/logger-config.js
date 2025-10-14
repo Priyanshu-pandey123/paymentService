@@ -8,7 +8,7 @@ const logger = createLogger({
   level: "info", 
   format: format.combine(
     format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-    format.colorize(),
+    // Remove colorize() since it's not needed for file logs
     format.printf(({ timestamp, level, message, ...meta }) => {
       let log = `[${timestamp}] [${level}]: ${message}`;
       if (Object.keys(meta).length) {
@@ -18,9 +18,7 @@ const logger = createLogger({
     })
   ),
   transports: [
-    new transports.Console({
-      level: "info",
-    }),
+    // Remove Console transport to stop terminal logging
     new transports.File({
       filename: logFilePath,
       level: "info",
