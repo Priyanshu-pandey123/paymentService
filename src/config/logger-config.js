@@ -1,9 +1,6 @@
 const { createLogger, format, transports } = require("winston");
 const path = require("path");
-
-
 const logFilePath = path.resolve(__dirname, "../../payment.log");
-
 const logger = createLogger({
   level: "info", 
   format: format.combine(
