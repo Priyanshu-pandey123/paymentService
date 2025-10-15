@@ -7,5 +7,4 @@ module.exports = {
     DB_PASSWORD:process.env.DB_PASSWORD,
     DB_NAME_PROD:process.env.DB_NAME_PROD,
     DB_HOST:process.env.DB_HOST
-
 }
