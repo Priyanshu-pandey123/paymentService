@@ -1,13 +1,14 @@
 const { Sequelize } = require('sequelize');
 const logger = require('./logger-config'); 
 const dbConfig= require("./db-config");
-
+const dotenv = require('dotenv');
+dotenv.config();
 
 
 const DB_TIMEZONE = '+05:30';
 
 // Add defaults to prevent undefined values
-const {DB_USERNAME = 'root', DB_PASSWORD = 'rootpassword', DB_NAME = 'bull8payment', DB_HOST = '127.0.0.1', DB_DIALECT = 'mysql'} = dbConfig;
+const {DB_USERNAME = '', DB_PASSWORD = '', DB_NAME = '', DB_HOST = '127.0.0.1', DB_DIALECT = 'mysql'} = process.env;
 
 
 const sequelize = new Sequelize(DB_NAME, DB_USERNAME, DB_PASSWORD, {
