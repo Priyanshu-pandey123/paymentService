@@ -33,12 +33,12 @@ async function testDatabaseConnection() {
     return true;
   } catch (error) {
     
-    console.log(` Database connection failed - ${DB_NAME}@${DB_HOST}: ${error.message}`);
+    console.log(` Database connection failed - ${DB_NAME_PROD}@${DB_HOST}: ${error.message}`);
     
 
-    logger.error(`Database connection failed - ${DB_NAME}@${DB_HOST}: ${error.message}`, {
+    logger.error(`Database connection failed - ${DB_NAME_PROD}@${DB_HOST}: ${error.message}`, {
       error: error.message,
-      database: DB_NAME,
+      database: DB_NAME_PROD,
       host: DB_HOST,
       timestamp: new Date().toISOString(),
     });
