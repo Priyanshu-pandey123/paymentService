@@ -47,14 +47,14 @@ logger.info('🔄 Starting server initialization...', {
             process.exit(1);
         }
         console.log(`Server is running successfully on port ${ServerConfig.PORT}`)
-        logger.info(`Server is running successfully on port ${ServerConfig.PORT}`, { 
-            port: ServerConfig.PORT,
-            environment: process.env.NODE_ENV || 'development',
-            corsEnabled: true,
-            routesMounted: ['/api'],
-            databaseConnected: true,
-            timestamp: new Date().toISOString()
-        });
+        // logger.info(`Server is running successfully on port ${ServerConfig.PORT}`, { 
+        //     port: ServerConfig.PORT,
+        //     environment: process.env.NODE_ENV || 'development',
+        //     corsEnabled: true,
+        //     routesMounted: ['/api'],
+        //     databaseConnected: true,
+        //     timestamp: new Date().toISOString()
+        // });
     });
 
 })().catch((error) => {
