@@ -1,8 +1,7 @@
 const { Sequelize } = require('sequelize');
 const logger = require('./logger-config'); 
-const dbConfig= require("./db-config");
-const dotenv = require('dotenv');
-dotenv.config();
+require('dotenv').config(); // load from root automatically
+
 
 
 const DB_TIMEZONE = '+05:30';
@@ -11,9 +10,10 @@ const DB_TIMEZONE = '+05:30';
 const {DB_USERNAME = '', DB_PASSWORD = '', DB_NAME = '', DB_HOST = '127.0.0.1', DB_DIALECT = 'mysql'} = process.env;
 
 
+
 const sequelize = new Sequelize(DB_NAME, DB_USERNAME, DB_PASSWORD, {
   host: DB_HOST,
-  dialect: 'mysql',
+  dialect: DB_DIALECT,
   timezone: DB_TIMEZONE,
   logging: false, 
 });
