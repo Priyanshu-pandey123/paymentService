@@ -14,7 +14,7 @@ function encryptData(data) {
   const iv = crypto.randomBytes(16);
   const cipher = crypto.createCipheriv(
     "aes-256-cbc",
-    crypto.createHash("sha256").update(SECRET_KEY).digest(),
+    crypto.createHash("sha256").update(SECRET_KEY).digest('hex'),
     iv
   );
 
@@ -42,7 +42,7 @@ function decryptData(encryptedData) {
   const iv = Buffer.from(ivSafe, "base64");
   const decipher = crypto.createDecipheriv(
     "aes-256-cbc",
-    crypto.createHash("sha256").update(SECRET_KEY).digest(),
+    crypto.createHash("sha256").update(SECRET_KEY).digest("hex"),
     iv
   );
 
@@ -67,6 +67,8 @@ async function generateUrl(req) {
   const payload = { name, email, contact, userId, domainName ,ctclId};
   const encryptedPayload = encodeURIComponent(encryptData(payload));
   const signature = createHmac(encryptedPayload);
+
+  
 
   // const frontendUrl = "http://localhost:5173/";
   const frontendUrl= ServerConfig.FRONTEND_URL;
