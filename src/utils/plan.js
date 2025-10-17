@@ -1,6 +1,6 @@
 export const  planData=[
     {
-        plan:"starter",
+        plan:"STARTER",
         amount:"100",
         description:"starter payment",
         

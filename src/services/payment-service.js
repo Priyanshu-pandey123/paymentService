@@ -22,7 +22,7 @@ const razorpay = new Razorpay({
 async function createPayment(data) {
     try {
       const { plan, userData } = data;
-    const { name, email, contact, userId, domainName, ctclId } = userData || {};
+    const { name, email, contact, userId, domainName, ctclId,} = userData || {};
 
 
     if (!plan || !userData) {
