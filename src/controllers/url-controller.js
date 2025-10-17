@@ -8,7 +8,7 @@ const { StatusCodes } = require('http-status-codes');
 
  async function getEncryptedUrl(req, res) {
     const ip = extractIP(req);
-    const {email, name, contact, userId, domainName, ctclId} = req.body;
+    const {email, name, contact, userId, domainName, ctclId, plan} = req.body;
     
     logger.info('URL Generation request received', { 
         ip, 
@@ -22,7 +22,7 @@ const { StatusCodes } = require('http-status-codes');
     });
     
     try{
-        if(!email || !name || !contact || !userId || !domainName || !ctclId){
+        if(!email || !name || !contact || !userId || !domainName || !ctclId || !plan){
             logger.warn('URL Generation failed - missing fields', { 
                 ip, 
                 userId,
@@ -32,11 +32,12 @@ const { StatusCodes } = require('http-status-codes');
                     contact: !contact,
                     userId: !userId,
                     domainName: !domainName,
-                    ctclId: !ctclId
+                    ctclId: !ctclId,
+                    planL:!plan
                 }
             });
             
-            ErrorResponse.message="Missing Field: email, name, contact, userId, domainName needed"
+            ErrorResponse.message="Missing Field: email, name, contact, userId,plan, domainName needed"
             return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
         }
 

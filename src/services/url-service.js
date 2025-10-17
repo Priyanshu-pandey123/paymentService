@@ -14,7 +14,7 @@ function encryptData(data) {
   const iv = crypto.randomBytes(16);
   const cipher = crypto.createCipheriv(
     "aes-256-cbc",
-    crypto.createHash("sha256").update(SECRET_KEY).digest('hex'),
+    crypto.createHash("sha256").update(SECRET_KEY).digest(),
     iv
   );
 
@@ -42,7 +42,7 @@ function decryptData(encryptedData) {
   const iv = Buffer.from(ivSafe, "base64");
   const decipher = crypto.createDecipheriv(
     "aes-256-cbc",
-    crypto.createHash("sha256").update(SECRET_KEY).digest("hex"),
+    crypto.createHash("sha256").update(SECRET_KEY).digest(),
     iv
   );
 
@@ -58,13 +58,13 @@ function createHmac(data) {
 
 // Generate secure URL
 async function generateUrl(req) {
-  const { name, email, contact, userId, domainName,ctclId } = req.body;
+  const { name, email, contact, userId, domainName,ctclId,plan } = req.body;
 
-  if (!name || !email || !contact || !userId || !domainName || !ctclId) {
+  if (!name || !email || !contact || !userId || !domainName || !ctclId  ||  !plan) {
     throw new AppError("All fields are required", 400);
   }
 
-  const payload = { name, email, contact, userId, domainName ,ctclId};
+  const payload = { name, email, contact, userId, domainName ,ctclId,plan};
   const encryptedPayload = encodeURIComponent(encryptData(payload));
   const signature = createHmac(encryptedPayload);
 
@@ -83,10 +83,7 @@ async function generateUrl(req) {
       logger.warn("Missing data or signature in decodeUrl", { dataPresent: Boolean(data), sigPresent: Boolean(sig) });
       throw new AppError("Missing data or signature", StatusCodes.BAD_REQUEST);
     }
-
-
-
-  const expectedSig = createHmac(data);
+    const expectedSig = createHmac(data);
   if (expectedSig !== sig) {
       logger.warn("Invalid signature detected in decodeUrl", { dataSnippet: data.slice(0, 50) });
       throw new AppError("Invalid signature! Data may have been tampered with.", StatusCodes.UNAUTHORIZED);
