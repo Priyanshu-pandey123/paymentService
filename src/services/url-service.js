@@ -5,6 +5,11 @@ const {UrlRepository}= require("../repositories")
 const {logger}= require("../config")
 const {ServerConfig}= require('../config')
 const SECRET_KEY=ServerConfig.SECRET_KEY;
+
+
+
+const urlRepository = new UrlRepository()
+
 function encryptData(data) {
   const iv = crypto.randomBytes(16);
   const cipher = crypto.createCipheriv(
@@ -23,7 +28,6 @@ function encryptData(data) {
   return `${ivSafe}:${encryptedSafe}`;
 }
 
-const urlRepository = new UrlRepository()
 
 
 function decryptData(encryptedData) {
