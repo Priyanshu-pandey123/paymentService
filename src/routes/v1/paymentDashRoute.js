@@ -7,7 +7,7 @@ const router = express.Router();
 
 // Apply dashboard-specific rate limiting
 router.use(dashboardLimiter);
- console.log(dashboardLimiter,'from the  payment  dash')
+
 
 router.get("/getAllPayment", validate('getAllPayment'), PaymentDashController.getAllPayment);
 router.get("/getPaymentByUserId", validate('getPaymentByUserId'), PaymentDashController.getPaymentByUserId);
