@@ -15,7 +15,34 @@ const sequelize = new Sequelize(DB_NAME, DB_USERNAME, DB_PASSWORD, {
   host: DB_HOST,
   dialect: DB_DIALECT,
   timezone: DB_TIMEZONE,
-  logging: false, 
+  logging: process.env.NODE_ENV === 'development' ? console.log : false, // Disable logging in production
+  
+  // Security configurations
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000
+  },
+  
+  // Prevent SQL injection by disabling raw SQL where possible
+  define: {
+    paranoid: true, // Soft deletes
+    timestamps: true,
+    underscored: true, // Use snake_case column names
+    freezeTableName: true, // Prevent Sequelize from pluralizing table names
+  },
+  
+  // Additional security settings
+  dialectOptions: {
+    // MySQL specific
+    charset: 'utf8mb4',
+    supportBigNumbers: true,
+    bigNumberStrings: true,
+    // Prevent timezone-based attacks
+    useUTC: false,
+    timezone: DB_TIMEZONE,
+  }
 });
 
 

@@ -9,15 +9,7 @@ const {PaymentService}= require("../services")
        const {plan , userData }= req.body;
          logger.info('Create Payment request received', { ip, body: req.body });
       try{
-        if (!plan || !userData) {
-      ErrorResponse.message = 'Missing data';
-      ErrorResponse.error = 'Missing required fields: plan or userData';
-      logger.warn('Payment creation failed - missing data', { ip, body: req.body });
-      return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
-    }
-
-
-           const response = await PaymentService.createPayment(req.body);
+        const response = await PaymentService.createPayment(req.body);
             SuccessResponse.data = response.order;
               SuccessResponse.message = 'Payment created successfully';
               logger.info('Payment created successfully', { ip, orderId: response.order.id });
