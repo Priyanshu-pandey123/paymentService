@@ -59,14 +59,20 @@ logger.info('🔄 Starting server initialization...', {
     app.use(logRequest);
     
     // CORS configuration with restrictions
-    app.use(cors({
-      origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['http://localhost:3000'],
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-      credentials: true,
-      maxAge: 86400 // 24 hours
-    }));
+    // app.use(cors({
+    //   origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['http://localhost:3000'],
+    //   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    //   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    //   credentials: true,
+    //   maxAge: 86400 // 24 hours
+    // }));
 
+app.use(cors({
+  origin: '*',           // allow requests from any origin
+  methods: '*',          // allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
+  allowedHeaders: '*',   // allow all headers
+  credentials: false     // don't send cookies/auth by default
+}));
     app.use(express.json({ limit: '1mb' }));
     app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
