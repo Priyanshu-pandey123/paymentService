@@ -15,6 +15,8 @@ const {
 } = require('./middlewares/security');
 
 const app = express();
+app.set('trust proxy', 1); // or true
+
 
 logger.info('🔄 Starting server initialization...', { 
     port: ServerConfig.PORT,

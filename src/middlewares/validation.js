@@ -154,12 +154,17 @@ const schemas = {
       .messages({
         'string.empty': 'CTCL ID is required'
       }),
-    plan: Joi.string()
+      plan: Joi.string()
       .valid('STARTER', 'growth', 'pro', 'elite')
       .required()
       .messages({
         'any.required': 'Plan is required',
         'any.only': 'Plan must be one of: STARTER, growth, pro, elite'
+      }),
+    brokerId: Joi.string()
+      .required()
+      .messages({
+        'string.empty': 'Broker ID is required'
       })
   }),
 

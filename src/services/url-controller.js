@@ -9,7 +9,6 @@ const { StatusCodes } = require('http-status-codes');
  async function getEncryptedUrl(req, res) {
     const ip = extractIP(req);
     const {email, name, contact, userId, domainName, ctclId, plan,brokerId} = req.body;
-     console.log(brokerId,'form the url encoder')
     
     logger.info('URL Generation request received', { 
         ip, 
@@ -38,7 +37,7 @@ const { StatusCodes } = require('http-status-codes');
                 }
             });
             
-            ErrorResponse.message="Missing Field: email, name, contact, userId,plan,brokerId, domainName needed"
+            ErrorResponse.message="orderId"
             return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
         }
 
