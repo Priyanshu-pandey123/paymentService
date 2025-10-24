@@ -30,7 +30,7 @@ async function createPayment(data,ip) {
       throw new AppError("Select the plan for payment", StatusCodes.BAD_REQUEST);
     }
 
-    console.log(userData,'from  the payment Created ***************')
+
      const selectedPlan = planData.find((p) => p.plan === plan);
 
        if (!selectedPlan) {
