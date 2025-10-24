@@ -26,10 +26,7 @@ class PaymentDashRepository extends CrudRepository {
                 attributes: {
                     exclude: ['raw_payload'] // Don't expose sensitive data
                 },
-                where: {
-                    // Only return verified payments in dashboard
-                    payment_verified: 'YES'
-                }
+              
             });
 
             const totalPayments = count;

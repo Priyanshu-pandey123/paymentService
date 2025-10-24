@@ -19,16 +19,18 @@ const razorpay = new Razorpay({
     key_secret:RazorConfig.RAZORPAY_SECRET,
   });
 
-async function createPayment(data) {
+async function createPayment(data,ip) {
     try {
       const { plan, userData } = data;
-    const { name, email, contact, userId, domainName, ctclId,} = userData || {};
+    const { name, email, contact, userId, domainName, ctclId,brokerId} = userData || {};
 
 
     if (!plan || !userData) {
       logger.error("Payment creation failed - missing fields", { ip, plan, userData });
       throw new AppError("Select the plan for payment", StatusCodes.BAD_REQUEST);
     }
+
+    console.log(userData,'from  the payment Created ***************')
      const selectedPlan = planData.find((p) => p.plan === plan);
 
        if (!selectedPlan) {
@@ -60,12 +62,16 @@ async function createPayment(data) {
             order_id: order.id,
             payment_status: "PENDING",
             plan:plan,
-            ctclId
+            ctclId,
+            brokerId,
+            ip_address:ip
+
         }
       );
    
     logger.info("Payment order created successfully", {
       userId,
+      brokerId,
       orderId: order.id,
       amount,
       plan,

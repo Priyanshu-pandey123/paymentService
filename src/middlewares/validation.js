@@ -48,10 +48,15 @@ const schemas = {
         .messages({
           'string.empty': 'Domain name is required'
         }),
-      ctclId: Joi.string()
+        ctclId: Joi.string()
         .required()
         .messages({
           'string.empty': 'CTCL ID is required'
+        }),
+      brokerId: Joi.string()
+        .required()
+        .messages({
+          'string.empty': 'Broker ID is required'
         })
     }).required().messages({
       'any.required': 'User data is required'

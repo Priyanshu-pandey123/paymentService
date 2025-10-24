@@ -6,19 +6,19 @@ export const  planData=[
         
     },
        {
-        plan:"growth",
+        plan:"GROWTH",
         amount:"200",
         description:"growth payment",
         
     },
        {
-        plan:"pro",
+        plan:"PRO",
         amount:"300",
         description:"pro payment",
         
     },
        {
-        plan:"elite",
+        plan:"ELITE",
         amount:"400",
         description:"elite payment",
         

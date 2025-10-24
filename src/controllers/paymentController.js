@@ -9,7 +9,7 @@ const {PaymentService}= require("../services")
        const {plan , userData }= req.body;
          logger.info('Create Payment request received', { ip, body: req.body });
       try{
-        const response = await PaymentService.createPayment(req.body);
+        const response = await PaymentService.createPayment(req.body, ip);
             SuccessResponse.data = response.order;
               SuccessResponse.message = 'Payment created successfully';
               logger.info('Payment created successfully', { ip, orderId: response.order.id });
