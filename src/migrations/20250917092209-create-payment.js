@@ -10,31 +10,33 @@ module.exports = {
         primaryKey: true
       },
       userId: {
-        type: Sequelize.STRING,  
+        type: Sequelize.STRING,
         allowNull: false
       },
-     userDomainUrl: {
+      userDomainUrl: {
         type: Sequelize.STRING(350),
         allowNull: false,
         validate: {
-          isUrl: true   
+          isUrl: true
         }
       },
-      ctclId:{
-         type: Sequelize.STRING(100),
-        allowNull: false
+      ctclId: {
+        type: Sequelize.STRING(36), // match your SQL char(36)
+        allowNull: true
+      },
+      brokerId: {
+        type: Sequelize.STRING(36),
+        allowNull: true
       },
       name: {
-            type: Sequelize.STRING(100),
+        type: Sequelize.STRING(100),
         allowNull: false
-     
       },
-        plan: {
-      type: Sequelize.ENUM('STARTER', 'GROWTH', 'PRO', 'ELITE'),
-      allowNull: false,
-      defaultValue: 'STARTER',
-    },
-
+      plan: {
+        type: Sequelize.ENUM('STARTER', 'GROWTH', 'PRO', 'ELITE'),
+        allowNull: false,
+        defaultValue: 'STARTER'
+      },
       email: {
         type: Sequelize.STRING(150),
         allowNull: false
@@ -48,11 +50,33 @@ module.exports = {
         allowNull: true
       },
       currency: {
-        type: Sequelize.STRING(10),
-        allowNull: true
+        type: Sequelize.STRING(3),
+        allowNull: false,
+        defaultValue: 'INR'
       },
       description: {
         type: Sequelize.TEXT,
+        allowNull: true
+      },
+
+      // Payment gateway & status
+      payment_gateway: {
+        type: Sequelize.ENUM('RAZORPAY'),
+        allowNull: false,
+        defaultValue: 'RAZORPAY'
+      },
+      transaction_status: {
+        type: Sequelize.ENUM('INITIATED', 'PENDING', 'CANCELLED', 'SUCCESS', 'FAILED', 'REJECTED'),
+        allowNull: false,
+        defaultValue: 'INITIATED'
+      },
+      payment_verified: {
+        type: Sequelize.ENUM('YES', 'NO'),
+        allowNull: false,
+        defaultValue: 'NO'
+      },
+      payment_method: {
+        type: Sequelize.STRING(50),
         allowNull: true
       },
       order_id: {
@@ -65,14 +89,8 @@ module.exports = {
         allowNull: true,
         unique: true
       },
-      method: {
-        type: Sequelize.STRING(50),
-        allowNull: true
-      },
-      status: {
-        type: Sequelize.STRING(50),
-        allowNull: true
-      },
+
+      // Optional/extra payment info
       vpa: {
         type: Sequelize.STRING(100),
         allowNull: true
@@ -84,16 +102,6 @@ module.exports = {
       tax: {
         type: Sequelize.DECIMAL(15, 2),
         allowNull: true
-      },
-      payment_verified: {
-        type: Sequelize.ENUM('YES', 'NO'),
-        allowNull: false,
-        defaultValue: 'NO'
-      },
-      payment_status: {
-        type: Sequelize.ENUM('PENDING', 'SUCCESS', 'FAILED',"CANCELLED"),
-        allowNull: false,
-        defaultValue: 'PENDING'
       },
       acquirer_data: {
         type: Sequelize.JSON,
@@ -109,18 +117,59 @@ module.exports = {
         defaultValue: {}
       },
 
-   createdAt: {
-  allowNull: false,
-  type: Sequelize.DATE,     
-  defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") 
-},
-updatedAt: {
-  allowNull: false,
-  type: Sequelize.DATE,
-  defaultValue: Sequelize.literal("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-}
+      // Meta & Tracking
+      user_agent: {
+        type: Sequelize.TEXT,
+        allowNull: true
+      },
+      ip_address: {
+        type: Sequelize.STRING(45),
+        allowNull: true
+      },
+      payment_attempted_at: {
+        type: Sequelize.DATE,
+        allowNull: true
+      },
+      pg_webhook_received_at: {
+        type: Sequelize.DATE,
+        allowNull: true
+      },
+      logged: {
+        type: Sequelize.TINYINT,
+        allowNull: false,
+        defaultValue: 0
+      },
+      logged_at: {
+        type: Sequelize.DATE,
+        allowNull: true
+      },
+      redirected_to_broker: {
+        type: Sequelize.TINYINT,
+        allowNull: true
+      },
+      timestamp_for_redirected_to_broker: {
+        type: Sequelize.DATE,
+        allowNull: true
+      },
+      webhook_called: {
+        type: Sequelize.TINYINT,
+        allowNull: true
+      },
+      timestamp_webhook_called: {
+        type: Sequelize.DATE,
+        allowNull: true
+      },
 
-
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP")
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+      }
     });
   },
 
