@@ -19,75 +19,170 @@ const razorpay = new Razorpay({
     key_secret:RazorConfig.RAZORPAY_SECRET,
   });
 
-async function createPayment(data,ip) {
-    try {
-      const { plan, userData } = data;
-    const { name, email, contact, userId, domainName, ctclId,brokerId} = userData || {};
-    if (!plan || !userData) {
-      logger.error("Payment creation failed - missing fields", { ip, plan, userData });
-      throw new AppError("Select the plan for payment", StatusCodes.BAD_REQUEST);
-    }
+// async function createPayment(data,ip) {
+//     try {
+//       const { plan, userData } = data;
+//     const { name, email, contact, userId, domainName, ctclId,brokerId} = userData || {};
+//     if (!plan || !userData) {
+//       logger.error("Payment creation failed - missing fields", { ip, plan, userData });
+//       throw new AppError("Select the plan for payment", StatusCodes.BAD_REQUEST);
+//     }
 
 
-     const selectedPlan = planData.find((p) => p.plan === plan);
+//      const selectedPlan = planData.find((p) => p.plan === plan);
 
-       if (!selectedPlan) {
-      logger.error("Invalid plan selected", { plan });
-      throw new AppError("Invalid plan selected", StatusCodes.BAD_REQUEST);
-    }
-      const { amount, plan: planName ,description} = selectedPlan;
-      const options = {
-      amount: amount,
-      currency: "INR",
-      receipt: `receipt_${Date.now()}`,
-      notes: {
-        plan: planName,
-        email,
-        description,
-      },
-    };
+//        if (!selectedPlan) {
+//       logger.error("Invalid plan selected", { plan });
+//       throw new AppError("Invalid plan selected", StatusCodes.BAD_REQUEST);
+//     }
+//       const { amount, plan: planName ,description} = selectedPlan;
+//       const options = {
+//       amount: amount,
+//       currency: "INR",
+//       receipt: `receipt_${Date.now()}`,
+//       notes: {
+//         plan: planName,
+//         email,
+//         description,
+//       },
+//     };
 
-      const order = await razorpay.orders.create(options);
+//       const order = await razorpay.orders.create(options);
 
-      const payment= await paymentRepository.createPayment(
-        {
-            name,
-            email,
-            contact,
-            userId,
-            userDomainUrl:domainName,
-            amount: (amount ||0)/100 , 
-            description,
-            order_id: order.id,
-            payment_status: "INITIATED",
-            plan:plan,
-            ctclId,
-            brokerId,
-            ip_address:ip
+//       const payment= await paymentRepository.createPayment(
+//         {
+//             name,
+//             email,
+//             contact,
+//             userId,
+//             userDomainUrl:domainName,
+//             amount: (amount ||0)/100 , 
+//             description,
+//             order_id: order.id,
+//             payment_status: "INITIATED",
+//             plan:plan,
+//             ctclId,
+//             brokerId,
+//             ip_address:ip
 
-        }
-      );
+//         }
+//       );
    
-    logger.info("Payment order created successfully", {
-      userId,
-      brokerId,
-      orderId: order.id,
-      amount,
-      plan,
-    });
+//     logger.info("Payment order created successfully", {
+//       userId,
+//       brokerId,
+//       orderId: order.id,
+//       amount,
+//       plan,
+//     });
 
-      return { order, payment };
+//       return { order, payment };
        
-    } catch(error) {
-     logger.error("Payment creation error", { 
-      ip: data?.ip || "unknown", 
-      userId: data?.userData?.userId, 
-      error: error.message, 
-      stack: error.stack 
-    });
-    throw error;
-    }
+//     } catch(error) {
+//      logger.error("Payment creation error", { 
+//       ip: data?.ip || "unknown", 
+//       userId: data?.userData?.userId, 
+//       error: error.message, 
+//       stack: error.stack 
+//     });
+//     throw error;
+//     }
     
+// }
+
+async function createPayment(data,ip) {
+  try {
+    const { plan, userData } = data;
+  const { name, email, contact, userId, domainName, ctclId,brokerId} = userData || {};
+
+  if (!plan || !userData) {
+    logger.error("Payment creation failed - missing fields", { ip, plan, userData });
+    throw new AppError("Select the plan for payment", StatusCodes.BAD_REQUEST);
+  }
+
+  // Check if user already has a successful payment
+  const existingSuccessfulPayment = await paymentRepository.checkSuccessfulPaymentByUserId(userId);
+  if (existingSuccessfulPayment) {
+    logger.warn("Payment creation blocked - user already has successful payment", { 
+      userId, 
+      existingPaymentId: existingSuccessfulPayment.id,
+      ip 
+    });
+    
+    // Return structured response instead of throwing error
+    return {
+      success: false,
+      message: "User already exists with successful payment",
+      data: {
+        userId: userId,
+        existingPaymentId: existingSuccessfulPayment.id,
+        transactionStatus: existingSuccessfulPayment.transaction_status,
+        paymentDate: existingSuccessfulPayment.createdAt,
+        plan: existingSuccessfulPayment.plan
+      },
+      code: "USER_ALREADY_EXISTS"
+    };
+  }
+
+   const selectedPlan = planData.find((p) => p.plan === plan);
+
+     if (!selectedPlan) {
+    logger.error("Invalid plan selected", { plan });
+    throw new AppError("Invalid plan selected", StatusCodes.BAD_REQUEST);
+  }
+    const { amount, plan: planName ,description} = selectedPlan;
+    const options = {
+    amount: amount,
+    currency: "INR",
+    receipt: `receipt_${Date.now()}`,
+    notes: {
+      plan: planName,
+      email,
+      description,
+    },
+  };
+
+    const order = await razorpay.orders.create(options);
+
+    const payment= await paymentRepository.createPayment(
+      {
+          name,
+          email,
+          contact,
+          userId,
+          userDomainUrl:domainName,
+          amount: (amount ||0)/100 , 
+          description,
+          order_id: order.id,
+          payment_status: "INITIATED",
+          plan:plan,
+          ctclId,
+          brokerId,
+          ip_address:ip
+
+      }
+    );
+ 
+  logger.info("Payment order created successfully", {
+    userId,
+    brokerId,
+    orderId: order.id,
+    amount,
+    plan,
+  });
+
+    return { order, payment };
+     
+  } catch(error) {
+   logger.error("Payment creation error", { 
+    ip: data?.ip || "unknown", 
+    userId: data?.userData?.userId, 
+    error: error.message, 
+    stack: error.stack 
+  });
+  throw error;
+  }
+  
 }
 
 async function verifyPayment(data) {
@@ -236,7 +331,7 @@ async function paymentWebhook(req, res) {
           logger.info("Unhandled Razorpay event type", { event: payload.event });
           break;
       }
-      
+
     await paymentRepository.updatePaymentByOrderId(paymentDetails.order_id, updates);
     logger.info("Webhook processed successfully", {
       ip,

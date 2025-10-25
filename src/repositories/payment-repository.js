@@ -95,6 +95,37 @@ class PaymentRepository extends CrudRepository {
             throw error;
         }
     }
+    async checkSuccessfulPaymentByUserId(userId) {
+        try {
+            logger.debug('Repository: Checking for successful payment by user ID', { userId });
+            
+            const existingPayment = await Payment.findOne({
+                where: {
+                    userId: userId,
+                    transaction_status: 'SUCCESS'
+                }
+            });
+            
+            logger.debug('Repository: Successful payment check result', { 
+                userId,
+                hasSuccessfulPayment: Boolean(existingPayment),
+                paymentId: existingPayment?.id
+            });
+            
+            return existingPayment;
+        } catch(error) {
+            logger.error('Repository: Failed to check successful payment', { 
+                userId,
+                error: error.message,
+                stack: error.stack
+            });
+            throw error;
+        }
+    }
 }
 
+
+
 module.exports = PaymentRepository;
+
+

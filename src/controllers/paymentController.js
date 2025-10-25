@@ -4,28 +4,68 @@ const { StatusCodes } = require('http-status-codes');
 const {PaymentService}= require("../services")
  const {logger} = require("../config")
 
- async function createPayment(req, res) {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-         const {plan , userData }= req.body;
-         logger.info('Create Payment request received', { ip, body: req.body });
-      try{
-        const response = await PaymentService.createPayment(req.body, ip);
-            SuccessResponse.data = response.order;
-              SuccessResponse.message = 'Payment created successfully';
-              logger.info('Payment created successfully', { ip, orderId: response.order.id });
+//  async function createPayment(req, res) {
+//     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+//          const {plan , userData }= req.body;
+//          logger.info('Create Payment request received', { ip, body: req.body });
+//       try{
+//         const response = await PaymentService.createPayment(req.body, ip);
+//             SuccessResponse.data = response.order;
+//               SuccessResponse.message = 'Payment created successfully';
+//               logger.info('Payment created successfully', { ip, orderId: response.order.id });
 
-              return res.status(StatusCodes.OK).json(SuccessResponse);
+//               return res.status(StatusCodes.OK).json(SuccessResponse);
 
-      }catch(error){
-       ErrorResponse.error = error.explanation || 'Something went wrong';
-    ErrorResponse.message = 'Payment creation failed';
-    logger.error('Payment creation error', { ip, error: error.message, stack: error.stack });
+//       }catch(error){
+//        ErrorResponse.error = error.explanation || 'Something went wrong';
+//     ErrorResponse.message = 'Payment creation failed';
+//     logger.error('Payment creation error', { ip, error: error.message, stack: error.stack });
 
-    return res
-      .status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR)
-      .json(ErrorResponse);
-      }
- }
+//     return res
+//       .status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR)
+//       .json(ErrorResponse);
+//       }
+//  }
+
+async function createPayment(req, res) {
+   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        const {plan , userData }= req.body;
+        logger.info('Create Payment request received', { ip, body: req.body });
+     try{
+       const response = await PaymentService.createPayment(req.body, ip);
+       
+       // Check if user already exists with successful payment
+       if (response.success === false && response.code === "USER_ALREADY_EXISTS") {
+           logger.info('User already exists with successful payment', { 
+               ip, 
+               userId: response.data.userId,
+               existingPaymentId: response.data.existingPaymentId 
+           });
+           
+           return res.status(StatusCodes.CONFLICT).json({
+               success: false,
+               message: response.message,
+               data: response.data,
+               code: response.code
+           });
+       }
+       
+           SuccessResponse.data = response.order;
+             SuccessResponse.message = 'Payment created successfully';
+             logger.info('Payment created successfully', { ip, orderId: response.order.id });
+
+             return res.status(StatusCodes.OK).json(SuccessResponse);
+
+     }catch(error){
+      ErrorResponse.error = error.explanation || 'Something went wrong';
+   ErrorResponse.message = 'Payment creation failed';
+   logger.error('Payment creation error', { ip, error: error.message, stack: error.stack });
+
+   return res
+     .status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR)
+     .json(ErrorResponse);
+     }
+}
 
 
  async function verifyPayment(req, res) {
