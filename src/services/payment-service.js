@@ -60,7 +60,7 @@ async function createPayment(data,ip) {
             amount: amount, 
             description,
             order_id: order.id,
-            transaction_status: "PENDING",
+            payment_status: "PENDING",
             plan:plan,
             ctclId,
             brokerId,
@@ -245,18 +245,12 @@ async function cancelPayment(orderId) {
 
  logger.info("Cancelling payment in service", { orderId });
     const updates = {
-     transaction_status:"CANCELLED"
+     payment_status:"CANCELLED"
     }
    const response = await paymentRepository.updatePaymentByOrderId(orderId,updates)
        logger.info("Payment cancelled successfully in service", { orderId, updatedRecord: response });
    return response;
 
-
- 
-
-  return {
-
-  };
  } catch(error) {
     logger.error("Payment cancellation service error", { orderId, error: error.message, stack: error.stack });
     throw error;
