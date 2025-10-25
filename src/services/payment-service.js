@@ -178,7 +178,8 @@ async function paymentWebhook(req, res) {
       logger.warn("Invalid webhook signature");
       return res.status(400).json({ success: false, error: "Invalid signature" });
     }
-
+   
+    
     const payload = req.body;
     const paymentDetails = payload?.payload?.payment?.entity;
 
@@ -191,8 +192,10 @@ async function paymentWebhook(req, res) {
    
     const updates = {
       payment_id: paymentDetails.id,
-      raw_payload: payload,
-      payment_verified: "YES",// check if wanted 
+       raw_payload: payload,
+       pg_webhook_received_at: new Date(),
+       payment_verified: "YES",// check if wanted 
+       transaction_status: "PENDING",
       status: paymentDetails.status || null,
       method: paymentDetails.method || null,
       currency: paymentDetails.currency || null,
@@ -200,20 +203,31 @@ async function paymentWebhook(req, res) {
       fee: paymentDetails.fee || 0,
       tax: paymentDetails.tax || 0,
       acquirer_data: paymentDetails.acquirer_data || {},
-      notes: paymentDetails.notes || {}
+      notes: paymentDetails.notes || {},
+      ip_address: ip,
+      webhook_called: 1,
+      timestamp_webhook_called: new Date(),
     };
 
 
+      // Handle event types
     switch (payload.event) {
       case "payment.captured":
         updates.transaction_status = "SUCCESS";
+        updates.payment_verified = "YES";
         break;
+
       case "payment.failed":
         updates.transaction_status = "FAILED";
         updates.payment_verified = "NO";
         break;
+
+      case "payment.authorized":
+        updates.transaction_status = "PENDING";
+        break;
+
       default:
-        logger.info("Unhandled Razorpay event", { event: payload.event });
+        logger.info("Unhandled Razorpay event type", { event: payload.event });
         break;
     }
 
