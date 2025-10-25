@@ -23,8 +23,6 @@ async function createPayment(data,ip) {
     try {
       const { plan, userData } = data;
     const { name, email, contact, userId, domainName, ctclId,brokerId} = userData || {};
-
-
     if (!plan || !userData) {
       logger.error("Payment creation failed - missing fields", { ip, plan, userData });
       throw new AppError("Select the plan for payment", StatusCodes.BAD_REQUEST);
@@ -58,7 +56,7 @@ async function createPayment(data,ip) {
             contact,
             userId,
             userDomainUrl:domainName,
-            amount: amount, 
+            amount: (amount ||0)/100 , 
             description,
             order_id: order.id,
             payment_status: "INITIATED",
@@ -197,12 +195,12 @@ async function paymentWebhook(req, res) {
        pg_webhook_received_at: new Date(),
        payment_verified: "YES",// check if wanted 
        transaction_status: "PENDING",
-      status: paymentDetails.status || null,
-      method: paymentDetails.method || null,
+       status: paymentDetails.status || null,
+       method: paymentDetails.method || null,
       currency: paymentDetails.currency || null,
       vpa: paymentDetails.vpa || paymentDetails?.upi?.vpa || null,
-      fee: paymentDetails.fee || 0,
-      tax: paymentDetails.tax || 0,
+      fee: (paymentDetails.fee || 0)/100,
+      tax: (paymentDetails.tax || 0)/100,
       acquirer_data: paymentDetails.acquirer_data || {},
       notes: paymentDetails.notes || {},
       ip_address: ip,
@@ -211,28 +209,34 @@ async function paymentWebhook(req, res) {
     };
 
 
+  
       // Handle event types
-    switch (payload.event) {
-      case "payment.captured":
-        updates.transaction_status = "SUCCESS";
-        updates.payment_verified = "YES";
-        break;
-
-      case "payment.failed":
-        updates.transaction_status = "FAILED";
-        updates.payment_verified = "NO";
-        break;
-
-      case "payment.authorized":
-        updates.transaction_status = "PENDING";
-        break;
-
-      default:
-        logger.info("Unhandled Razorpay event type", { event: payload.event });
-        break;
-    }
-
-
+      // Handle event types
+      switch (payload.event) {
+        case "payment.captured":
+          updates.transaction_status = "SUCCESS";
+          updates.payment_verified = "YES";
+          break;
+  
+        case "order.paid":  // Add this case
+          updates.transaction_status = "SUCCESS";
+          updates.payment_verified = "YES";
+          break;
+  
+        case "payment.failed":
+          updates.transaction_status = "FAILED";
+          updates.payment_verified = "NO";
+          break;
+  
+        case "payment.authorized":
+          updates.transaction_status = "PENDING";
+          break;
+  
+        default:
+          logger.info("Unhandled Razorpay event type", { event: payload.event });
+          break;
+      }
+      
     await paymentRepository.updatePaymentByOrderId(paymentDetails.order_id, updates);
     logger.info("Webhook processed successfully", {
       ip,
@@ -260,7 +264,7 @@ async function cancelPayment(orderId) {
 
  logger.info("Cancelling payment in service", { orderId });
     const updates = {
-     payment_status:"CANCELLED"
+     transaction_status:"CANCELLED"
     }
    const response = await paymentRepository.updatePaymentByOrderId(orderId,updates)
        logger.info("Payment cancelled successfully in service", { orderId, updatedRecord: response });
