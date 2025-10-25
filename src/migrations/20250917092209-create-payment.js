@@ -20,6 +20,7 @@ module.exports = {
           isUrl: true
         }
       },
+      
       ctclId: {
         type: Sequelize.STRING(36), 
         allowNull: false
@@ -116,6 +117,17 @@ module.exports = {
         allowNull: false,
         defaultValue: {}
       },
+      is_plan_valid: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+      defaultValue: false
+
+      },
+      plan_valid_till: {
+        type: Sequelize.DATE,
+        allowNull: true 
+      },
+
 
       // Meta & Tracking
       user_agent: {

@@ -192,6 +192,18 @@ module.exports = (sequelize) => {
         type: DataTypes.DATE,
         allowNull: true,
       },
+      is_plan_valid: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    },
+
+    plan_valid_till: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+
+
     },
     {
       sequelize,
