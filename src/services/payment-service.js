@@ -60,7 +60,7 @@ async function createPayment(data,ip) {
             amount: amount, 
             description,
             order_id: order.id,
-            payment_status: "PENDING",
+            transaction_status: "PENDING",
             plan:plan,
             ctclId,
             brokerId,
@@ -162,10 +162,10 @@ async function paymentWebhook(req, res) {
               .json(ErrorResponse)
     }
 
-    // console.log("******************************* Webhook Data *******************************");
-    // console.log(JSON.stringify(req.body, null, 2));
-    // logger.info("webhook  data ",JSON.stringify(req.body ));
-    // console.log("***************************************************************************");
+    console.log("******************************* Webhook Data *******************************");
+    console.log(JSON.stringify(req.body, null, 2));
+    logger.info("webhook  data ",JSON.stringify(req.body ));
+    console.log("***************************************************************************");
 
     const rawBody = JSON.stringify(req.body);
     const isWebhookValid = validateWebhookSignature(
@@ -206,10 +206,10 @@ async function paymentWebhook(req, res) {
 
     switch (payload.event) {
       case "payment.captured":
-        updates.payment_status = "SUCCESS";
+        updates.transaction_status = "SUCCESS";
         break;
       case "payment.failed":
-        updates.payment_status = "FAILED";
+        updates.transaction_status = "FAILED";
         updates.payment_verified = "NO";
         break;
       default:
@@ -225,7 +225,7 @@ async function paymentWebhook(req, res) {
       paymentId: paymentDetails.id,
       orderId: paymentDetails.order_id,
       amount: paymentDetails.amount,
-      status: updates.payment_status
+      status: updates.transaction_status
     });
 
     return res.status(200).json({ success: true });
@@ -245,7 +245,7 @@ async function cancelPayment(orderId) {
 
  logger.info("Cancelling payment in service", { orderId });
     const updates = {
-     payment_status:"CANCELLED"
+     transaction_status:"CANCELLED"
     }
    const response = await paymentRepository.updatePaymentByOrderId(orderId,updates)
        logger.info("Payment cancelled successfully in service", { orderId, updatedRecord: response });

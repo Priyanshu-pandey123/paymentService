@@ -10,8 +10,6 @@ class UrlRepository extends CrudRepository {
         super(Payment);
     }
       async createUserData(data) {
-
-
          const {userId, domainName,contact,email ,name}= data
          const   response  = await this.create({
             userId,
@@ -20,14 +18,8 @@ class UrlRepository extends CrudRepository {
             email,
              userDomainUrl:domainName
          })
-         return  response;
-       
-    } 
- 
-  
-
-
- 
+         return  response; 
+    }  
 }
 
 module.exports = UrlRepository;

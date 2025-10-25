@@ -21,12 +21,12 @@ module.exports = {
         }
       },
       ctclId: {
-        type: Sequelize.STRING(36), // match your SQL char(36)
-        allowNull: true
+        type: Sequelize.STRING(36), 
+        allowNull: false
       },
       brokerId: {
         type: Sequelize.STRING(36),
-        allowNull: true
+        allowNull: false
       },
       name: {
         type: Sequelize.STRING(100),
@@ -47,7 +47,7 @@ module.exports = {
       },
       amount: {
         type: Sequelize.DECIMAL(15, 2),
-        allowNull: true
+        allowNull: false
       },
       currency: {
         type: Sequelize.STRING(3),
@@ -81,7 +81,7 @@ module.exports = {
       },
       order_id: {
         type: Sequelize.STRING,
-        allowNull: true,
+        allowNull: false,
         index: true
       },
       payment_id: {
