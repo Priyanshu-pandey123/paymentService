@@ -109,7 +109,8 @@ async function createPayment(data,ip) {
       ip 
     });
     
-    // Return structured response instead of throwing error
+
+    
     return {
       success: false,
       message: "User already exists with successful payment",
@@ -355,21 +356,46 @@ async function paymentWebhook(req, res) {
 }
 
 async function cancelPayment(orderId) {
- try {
-
- logger.info("Cancelling payment in service", { orderId });
-    const updates = {
-     transaction_status:"CANCELLED"
-    }
-   const response = await paymentRepository.updatePaymentByOrderId(orderId,updates)
-       logger.info("Payment cancelled successfully in service", { orderId, updatedRecord: response });
-   return response;
-
- } catch(error) {
-    logger.error("Payment cancellation service error", { orderId, error: error.message, stack: error.stack });
-    throw error;
+  try {
+ 
+  logger.info("Cancelling payment in service", { orderId });
+  
+  // First, find the payment to check its current status
+  const existingPayment = await paymentRepository.findByOrderId(orderId);
+  if (!existingPayment) {
+    logger.warn("Payment not found for cancellation", { orderId });
+    throw new AppError("Payment not found", StatusCodes.NOT_FOUND);
+  }
+ 
+  // Check if payment is already successful
+  if (existingPayment.transaction_status === "SUCCESS") {
+    logger.warn("Cannot cancel successful payment", { 
+      orderId, 
+      paymentId: existingPayment.id,
+      currentStatus: existingPayment.transaction_status 
+    });
+    
+    // Return the existing payment without updating
+    return {
+      success: false,
+      message: "Cannot cancel a successful payment",
+      payment: existingPayment,
+      code: "CANNOT_CANCEL_SUCCESSFUL_PAYMENT"
+    };
+  }
+ 
+     const updates = {
+      transaction_status:"CANCELLED"
+     }
+    const response = await paymentRepository.updatePaymentByOrderId(orderId,updates)
+        logger.info("Payment cancelled successfully in service", { orderId, updatedRecord: response });
+    return response;
+ 
+  } catch(error) {
+     logger.error("Payment cancellation service error", { orderId, error: error.message, stack: error.stack });
+     throw error;
+  }
  }
-}
 
 module.exports = {
     createPayment,

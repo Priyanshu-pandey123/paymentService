@@ -26,7 +26,6 @@ const {PaymentService}= require("../services")
 //       .json(ErrorResponse);
 //       }
 //  }
-
 async function createPayment(req, res) {
    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
         const {plan , userData }= req.body;
@@ -66,8 +65,6 @@ async function createPayment(req, res) {
      .json(ErrorResponse);
      }
 }
-
-
  async function verifyPayment(req, res) {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     logger.info('Verify payment request received', { ip, body: req.body });
@@ -113,34 +110,49 @@ async function paymentWebhook(req, res) {
                 .json(ErrorResponse)
    }
 }
-
- async function cancelPayment(req, res) {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-   try{
-      const {orderId}= req.body;
-      
-        if (!orderId) {
-      ErrorResponse.message = "Order Id Missing";
-      ErrorResponse.error = "Order id is missing";
-      logger.warn("Payment cancellation failed - missing orderId", { ip, body: req.body });
-      return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
-    }
-        logger.info("Cancelling payment", { ip, orderId });
+async function cancelPayment(req, res) {
+   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  try{
+     const {orderId}= req.body;
      
-       const response = await PaymentService.cancelPayment(orderId);
-       SuccessResponse.data = response;
-           logger.info("Payment cancelled successfully", { ip, orderId, response });
-        return res
-                 .status(StatusCodes.OK)
-                 .json(SuccessResponse)
-
-   }catch(error){
-    logger.error("Payment cancellation error", { ip, error: error.message, stack: error.stack });
-    ErrorResponse.error = error.explanation || 'Something went wrong';
-    return res.status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+       if (!orderId) {
+     ErrorResponse.message = "Order Id Missing";
+     ErrorResponse.error = "Order id is missing";
+     logger.warn("Payment cancellation failed - missing orderId", { ip, body: req.body });
+     return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
    }
-}
+       logger.info("Cancelling payment", { ip, orderId });
+    
+      const response = await PaymentService.cancelPayment(orderId);
 
+      // Check if cancellation was blocked due to successful payment
+      if (response.success === false && response.code === "CANNOT_CANCEL_SUCCESSFUL_PAYMENT") {
+        logger.info("Payment cancellation blocked - payment already successful", { 
+          ip, 
+          orderId,
+          paymentId: response.payment.id 
+        });
+        
+        return res.status(StatusCodes.OK).json({
+          success: false,
+          message: response.message,
+          data: response.payment,
+          code: response.code
+        });
+      }
+    
+      SuccessResponse.data = response;
+          logger.info("Payment cancelled successfully", { ip, orderId, response });
+       return res
+                .status(StatusCodes.OK)
+                .json(SuccessResponse)
+
+  }catch(error){
+   logger.error("Payment cancellation error", { ip, error: error.message, stack: error.stack });
+   ErrorResponse.error = error.explanation || 'Something went wrong';
+   return res.status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+  }
+}
  module.exports={
     createPayment,
     verifyPayment,
