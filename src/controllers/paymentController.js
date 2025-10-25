@@ -6,7 +6,7 @@ const {PaymentService}= require("../services")
 
  async function createPayment(req, res) {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-       const {plan , userData }= req.body;
+         const {plan , userData }= req.body;
          logger.info('Create Payment request received', { ip, body: req.body });
       try{
         const response = await PaymentService.createPayment(req.body, ip);

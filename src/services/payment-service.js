@@ -50,6 +50,7 @@ async function createPayment(data,ip) {
     };
 
       const order = await razorpay.orders.create(options);
+
       const payment= await paymentRepository.createPayment(
         {
             name,
@@ -60,7 +61,7 @@ async function createPayment(data,ip) {
             amount: amount, 
             description,
             order_id: order.id,
-            payment_status: "PENDING",
+            payment_status: "INITIATED",
             plan:plan,
             ctclId,
             brokerId,
@@ -270,12 +271,6 @@ async function cancelPayment(orderId) {
     throw error;
  }
 }
-
-
-
-
-
-
 
 module.exports = {
     createPayment,
