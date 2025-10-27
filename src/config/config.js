@@ -11,25 +11,25 @@ require('dotenv').config({
 module.exports = {
   development: {
     username: process.env.DB_USERNAME || '',
-    password: process.env.DB_PASSWORD || "",
+    password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME_DEV || '',
-    host: process.env.DB_HOST || "",
+    host: '127.0.0.1', // ✅ Hardcoded DB host
     dialect: process.env.DB_DIALECT || 'mysql',
     timezone: process.env.DB_TIMEZONE || '+05:30',
   },
   test: {
-    username: process.env.DB_USERNAME  || '',
-    password: process.env.DB_PASSWORD || "",
+    username: process.env.DB_USERNAME || '',
+    password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME_DEV || '',
-    host: process.env.DB_HOST || "",
+    host: '127.0.0.1', // ✅ Hardcoded DB host
     dialect: process.env.DB_DIALECT || 'mysql',
     timezone: process.env.DB_TIMEZONE || '+05:30',
   },
   production: {
-    username: process.env.DB_USERNAME  || '',
-    password: process.env.DB_PASSWORD || "",
+    username: process.env.DB_USERNAME || '',
+    password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME_DEV || '',
-    host: process.env.DB_HOST || "",
+    host: '127.0.0.1', // ✅ Hardcoded DB host
     dialect: process.env.DB_DIALECT || 'mysql',
     timezone: process.env.DB_TIMEZONE || '+05:30',
   },
