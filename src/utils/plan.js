@@ -1,4 +1,4 @@
-export const  planData=[
+module.exports.planData=[
     {
         plan:"STARTER",
         amount:"100",
@@ -25,4 +25,8 @@ export const  planData=[
     }
 
 ]
+
+
     
+
+
