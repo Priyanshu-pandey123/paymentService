@@ -32,24 +32,31 @@ async function createPayment(req, res) {
         logger.info('Create Payment request received', { ip, body: req.body });
      try{
        const response = await PaymentService.createPayment(req.body, ip);
+        console.log(response,'from the conflit in  the db tbles ')
        
-       // Check if user already exists with successful payment
-       if (response.success === false && response.code === "USER_ALREADY_EXISTS") {
-           logger.info('User already exists with successful payment', { 
-               ip, 
-               userId: response.data.userId,
-               existingPaymentId: response.data.existingPaymentId 
-           });
-           
-           return res.status(StatusCodes.CONFLICT).json({
-               success: false,
-               message: response.message,
-               data: response.data,
-               code: response.code
-           });
-       }
+   if (response.success && response.code === "RETRY_PAYMENT") {
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    message: response.message,
+    data: response.data,
+    code: response.code
+  });
+}
+
+if (response.success === false && 
+    (response.code === "USER_ALREADY_PAID" || response.code === "USER_ALREADY_EXISTS")) {
+  return res.status(StatusCodes.CONFLICT).json({
+    success: false,
+    message: response.message,
+    data: response.data,
+    code: response.code
+  });
+}
+
        
-           SuccessResponse.data = response.order;
+        
+       
+              SuccessResponse.data = response.order;
              SuccessResponse.message = 'Payment created successfully';
              logger.info('Payment created successfully', { ip, orderId: response.order.id });
 

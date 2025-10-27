@@ -39,6 +39,23 @@ class PaymentRepository extends CrudRepository {
             throw error;
         }
     }
+
+    async findByUserId(userId){
+
+        console.log(userId,'*&^%$#%^&*()*&^%$E%^&*(&^%$%^&*&^%$#%^&*(&^%$')
+         try {
+            logger.debug('Repository: Finding payment by user ID', { userId });
+            const payment = await Payment.findOne({ where: { userId: userId } });
+            return payment;
+        } catch(error) {
+            logger.error('Repository: Payment lookup failed', { 
+                orderId,
+                error: error.message,
+                stack: error.stack
+            });
+            throw error;
+        }
+    }
     
     async findByOrderId(orderId){
         try {

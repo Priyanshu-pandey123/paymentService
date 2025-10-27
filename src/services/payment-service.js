@@ -125,6 +125,53 @@ async function createPayment(data,ip) {
     };
   }
 
+const existingUser = await paymentRepository.findByUserId(userId);
+
+if (existingUser) {
+  logger.info("Existing user found in DB", { 
+    userId, 
+    ip,
+    status: existingUser.payment_status
+  });
+
+  // Case 1: If payment already SUCCESS — block new payment
+  if (existingUser.payment_status === "SUCCESS") {
+    logger.warn("User already has a successful payment", { userId, ip });
+    return {
+      success: false,
+      message: "User already completed payment successfully",
+      data: {
+        userId,
+        existingPaymentId: existingUser.id,
+        plan: existingUser.plan,
+        paymentStatus: existingUser.payment_status,
+        paymentDate: existingUser.createdAt
+      },
+      code: "USER_ALREADY_PAID"
+    };
+  }
+
+  // Case 2: If payment not successful — allow retry with existing order_id
+  logger.info("User has pending/failed payment - returning existing order ID", {
+    userId,
+    orderId: existingUser.order_id,
+    status: existingUser.payment_status
+  });
+
+  return {
+    success: true,
+    message: "User has an unfinished payment. Use this order ID to retry.",
+    data: {
+      userId,
+      id: existingUser.order_id,
+      paymentStatus: existingUser.payment_status,
+      plan: existingUser.plan,
+      amount: existingUser.amount
+    },
+    code: "RETRY_PAYMENT"
+  };
+}
+
    const selectedPlan = planData.find((p) => p.plan === plan);
 
      if (!selectedPlan) {

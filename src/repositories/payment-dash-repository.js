@@ -38,7 +38,7 @@ class PaymentDashRepository extends CrudRepository {
                 currentPage: page,
                 limit,
                 recordsReturned: rows.length
-            });
+            }); 
 
             return {
                 totalPayments,
