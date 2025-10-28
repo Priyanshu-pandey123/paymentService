@@ -25,7 +25,7 @@ const createLimiter = (windowMs, max, message) => {
 };
 
 // Different rate limits for different endpoints
-const paymentLimiter = createLimiter(15 * 60 * 1000, 10, 'Too many payment requests, please try again later');
+const paymentLimiter = createLimiter(15 * 60 * 1000, 100, 'Too many payment requests, please try again later');
 const dashboardLimiter = createLimiter(30 * 60 * 1000, 30, 'Too many dashboard requests, please try again later'); 
 const generalLimiter = createLimiter(15 * 60 * 1000, 100, 'Too many requests, please try again later');
 
