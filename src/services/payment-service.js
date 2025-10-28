@@ -333,7 +333,7 @@ async function paymentWebhook(req, res) {
 
    
     const updates = {
-      payment_id: paymentDetails.id,
+       payment_id: paymentDetails.id,
        raw_payload: payload,
        pg_webhook_received_at: new Date(),
        payment_verified: "YES",// check if wanted 
@@ -349,6 +349,7 @@ async function paymentWebhook(req, res) {
       ip_address: ip,
       webhook_called: 1,
       timestamp_webhook_called: new Date(),
+      is_plan_valid:false,
     };
 
 
@@ -359,11 +360,15 @@ async function paymentWebhook(req, res) {
         case "payment.captured":
           updates.transaction_status = "SUCCESS";
           updates.payment_verified = "YES";
+          updates.is_plan_valid=true;
+          update.plan_valid_till=new Date(Date.now()+30*24*60*60*1000)
           break;
   
         case "order.paid":  // Add this case
           updates.transaction_status = "SUCCESS";
           updates.payment_verified = "YES";
+          updates.is_plan_valid=true;
+          update.plan_valid_till=new Date(Date.now()+30*24*60*60*1000)
           break;
   
         case "payment.failed":

@@ -11,7 +11,7 @@ router.use(paymentLimiter);
 
 router.post("/create-order", validate('createPayment'), PaymentController.createPayment);
 router.post("/payment-verify", validate('verifyPayment'), PaymentController.verifyPayment);
-router.post("/payment-verify-webhook", PaymentController.paymentWebhook); // Webhook doesn't need validation as it's from Razorpay
+router.post("/payment-verify-webhook", PaymentController.paymentWebhook); 
 router.post("/cancel-payment", validate('cancelPayment'), PaymentController.cancelPayment);
 
 module.exports = router;
