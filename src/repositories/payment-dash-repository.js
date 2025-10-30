@@ -14,7 +14,7 @@ class PaymentDashRepository extends CrudRepository {
     async getAllPayment(limit = 20, page = 1) {
         try {
             // Validate and sanitize inputs
-            limit = Math.min(Math.max(parseInt(limit) || 20, 1), 100); // Max 100 records per page
+            limit = Math.min(Math.max(parseInt(limit) || 20, 1), 100); 
             page = Math.max(parseInt(page) || 1, 1);
             
             const offset = (page - 1) * limit;

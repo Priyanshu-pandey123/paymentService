@@ -421,10 +421,10 @@ try {
             .json(ErrorResponse)
   }
 
-  console.log("******************************* Webhook Data *******************************");
-  console.log(JSON.stringify(req.body, null, 2));
-  logger.info("webhook  data ",JSON.stringify(req.body ));
-  console.log("***************************************************************************");
+  // console.log("******************************* Webhook Data *******************************");
+  // console.log(JSON.stringify(req.body, null, 2));
+  // logger.info("webhook  data ",JSON.stringify(req.body ));
+  // console.log("***************************************************************************");
 
   const rawBody = JSON.stringify(req.body);
   const isWebhookValid = validateWebhookSignature(
