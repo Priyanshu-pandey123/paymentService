@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const AppError = require("../utils/errors/app-error");
 const StatusCodes= require("http-status-codes")
 const {UrlRepository}= require("../repositories")
-const {logger}= require("../config")
+const {logger,amountConfig}= require("../config")
 const {ServerConfig}= require('../config')
 const SECRET_KEY=ServerConfig.SECRET_KEY;
 
@@ -68,9 +68,6 @@ async function generateUrl(req) {
   const encryptedPayload = encodeURIComponent(encryptData(payload));
   const signature = createHmac(encryptedPayload);
 
-  
-
-  // const frontendUrl = "http://localhost:5173/";
   const frontendUrl= ServerConfig.FRONTEND_URL;
   return `${frontendUrl}?data=${encryptedPayload}&sig=${signature}`;
 }

@@ -1,14 +1,17 @@
 
 const {ErrorResponse,SuccessResponse}= require('../utils/common')
 const { StatusCodes } = require('http-status-codes');
- const {logger} = require("../config")
+ const {logger, amountConfig} = require("../config")
  const {UrlService}= require("../services")
  const { extractIP } = require("../utils/helpers/ip-helper")
+ const AppError = require('../utils/errors/app-error');
+const HttpStatusCode = require('http-status-codes');
+
 
 
  async function getEncryptedUrl(req, res) {
     const ip = extractIP(req);
-    const {email, name, contact, userId, domainName, ctclId, plan,brokerId} = req.body;
+    const {email, name, contact, userId, domainName, ctclId, plan,brokerId,amount} = req.body;
     
     logger.info('URL Generation request received', { 
         ip, 
@@ -22,7 +25,7 @@ const { StatusCodes } = require('http-status-codes');
     });
     
     try{
-        if(!email || !name || !contact || !userId || !domainName || !ctclId || !plan || !brokerId){
+        if(!email || !name || !contact || !userId || !domainName || !ctclId || !plan || !brokerId || !amount){
             logger.warn('URL Generation failed - missing fields', { 
                 ip, 
                 userId,
@@ -40,6 +43,20 @@ const { StatusCodes } = require('http-status-codes');
             ErrorResponse.message="Missing Field: email, name, contact, userId,plan,brokerId, domainName needed"
             return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
         }
+       
+
+             if (amount > amountConfig.MAX_AMOUNT) {
+           logger.error("Amount exceeds business limit", { amount, maxAmount: amountConfig.MAX_AMOUNT, ip });
+           ErrorResponse.message=`Amount exceeds the maximum limit of ₹${amountConfig.MAX_AMOUNT}`;
+           return res.status(HttpStatusCode.BAD_REQUEST).json(ErrorResponse)
+          }
+  
+      if (amount <= amountConfig.MIN_AMOUNT) {
+           logger.error("Amount below business minimum", { amount, minAmount: amountConfig.MIN_AMOUNT, ip });
+           ErrorResponse.message=`Amount is below the minimum limit of ₹${amountConfig.MIN_AMOUNT}`;
+           return res.status(HttpStatusCode.BAD_REQUEST).json(ErrorResponse)
+      }
+
 
         const response = await UrlService.generateUrl(req);
         
