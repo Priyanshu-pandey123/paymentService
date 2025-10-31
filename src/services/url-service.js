@@ -58,13 +58,13 @@ function createHmac(data) {
 
 // Generate secure URL
 async function generateUrl(req) {
-  const { name, email, contact, userId, domainName,ctclId,plan,brokerId } = req.body;
+  const { name, email, contact, userId, domainName,ctclId,plan,brokerId , amount} = req.body;
 
-  if (!name || !email || !contact || !userId || !domainName || !ctclId  ||  !plan || !brokerId) {
+  if (!name || !email || !contact || !userId || !domainName || !ctclId  ||  !plan || !brokerId || !amount) {
     throw new AppError("All fields are required", 400);
   }
 
-  const payload = { name, email, contact, userId, domainName ,ctclId,plan,brokerId};
+  const payload = { name, email, contact, userId, domainName ,ctclId,plan,brokerId, amount};
   const encryptedPayload = encodeURIComponent(encryptData(payload));
   const signature = createHmac(encryptedPayload);
 

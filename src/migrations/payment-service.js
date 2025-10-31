@@ -2,13 +2,13 @@ const axios = require('axios');
 const {StatusCodes} = require('http-status-codes');
 const Razorpay = require("razorpay");
 const { PaymentRepository } = require('../repositories');
-const { ServerConfig, amountConfig } = require('../config')
+const { ServerConfig, Queue } = require('../config')
 const db = require('../models');
 const AppError = require('../utils/errors/app-error');
 const crypto = require('crypto');
 // const {Enums} = require('../utils/common');
  const {planData}= require("../utils/plan")
-const {logger,RazorConfig}= require('../config');
+const {logger,RazorConfig,amountConfig}= require('../config');
 const { ErrorResponse } = require('../utils/common');
 
 
@@ -21,161 +21,178 @@ const razorpay = new Razorpay({
 
 
 
-async function createPayment(data,ip) {
-  try {
-    const { plan, userData } = data;
-  const { name, email, contact, userId, domainName, ctclId,brokerId,amount} = userData || {};
-  if (!plan || !userData) {
-    logger.error("Payment creation failed - missing fields", { ip, plan, userData });
-    throw new AppError("Select the plan for payment", StatusCodes.BAD_REQUEST);
-  }
-
-     const selectedPlan = planData.find((p) => p.plan === plan);
-   if (!selectedPlan) {
-    logger.error("Invalid plan selected", { plan });
-    throw new AppError("Invalid plan selected", StatusCodes.BAD_REQUEST);
-  }
-
-if (amount <= amountConfig.MIN_AMOUNT) {
-  logger.error("Payment amount too low", { amount, minAllowed: amountConfig.MIN_AMOUNT });
-  throw new AppError(`Minimum payment amount is ₹${amountConfig.MIN_AMOUNT}`, StatusCodes.BAD_REQUEST);
-}
-
-if (amount > amountConfig.MAX_AMOUNT) {
-  logger.error("Payment amount too high", { amount, maxAllowed: amountConfig.MAX_AMOUNT });
-  throw new AppError(`Maximum payment amount is ₹${amountConfig.MAX_AMOUNT}`, StatusCodes.BAD_REQUEST);
-}
-
-
-
-  // Check if user already has a successful payment
-const existingSuccessfulPayment = await paymentRepository.checkSuccessfulPaymentByUserId(userId);
-  if (existingSuccessfulPayment) {
-    logger.warn("Payment creation blocked - user already has successful payment", { 
-      userId, 
-      existingPaymentId: existingSuccessfulPayment.id,
-      ip 
-    });
-    
-
-    
-    return {
-      success: false,
-      message: "User already exists with successful payment",
-      data: {
-        userId: userId,
-        existingPaymentId: existingSuccessfulPayment.id,
-        transactionStatus: existingSuccessfulPayment.transaction_status,
-        paymentDate: existingSuccessfulPayment.createdAt,
-        plan: existingSuccessfulPayment.plan
-      },
-      code: "USER_ALREADY_EXISTS"
-    };
-  }
-
-const existingUser = await paymentRepository.findByUserId(userId);
-
-if (existingUser) {
-  logger.info("Existing user found in DB", { 
-    userId, 
-    ip,
-    status: existingUser.payment_status
-  });
-
-  // Case 1: If payment already SUCCESS — block new payment
-  if (existingUser.payment_status === "SUCCESS") {
-    logger.warn("User already has a successful payment", { userId, ip });
-    return {
-      success: false,
-      message: "User already completed payment successfully",
-      data: {
-        userId,
-        existingPaymentId: existingUser.id,
-        plan: existingUser.plan,
-        paymentStatus: existingUser.payment_status,
-        paymentDate: existingUser.createdAt
-      },
-      code: "USER_ALREADY_PAID"
-    };
-  }
-
-  // Case 2: If payment not successful — allow retry with existing order_id
-  logger.info("User has pending/failed payment - returning existing order ID", {
-    userId,
-    orderId: existingUser.order_id,
-    status: existingUser.payment_status
-  });
-
-  return {
-    success: true,
-    message: "User has an unfinished payment. Use this order ID to retry.",
-    data: {
-      userId,
-      id: existingUser.order_id,
-      paymentStatus: existingUser.payment_status,
-      plan: existingUser.plan,
-      amount: existingUser.amount
-    },
-    code: "RETRY_PAYMENT"
-  };
-}
-
-
-    const { description} = selectedPlan;
-    const options = {
-    amount: Math.round(amount * 100),
-    currency: "INR",
-    receipt: `receipt_${Date.now()}`,
-    notes: {
-      plan,
-      email,
-      description,
-    },
-  };
-
-    const order = await razorpay.orders.create(options);
-
-    const payment= await paymentRepository.createPayment(
-      {
-          name,
-          email,
-          contact,
-          userId,
-          userDomainUrl:domainName,
-          amount,
-          description,
-          order_id: order.id,
-          payment_status: "INITIATED",
-          plan,
-          ctclId,
-          brokerId,
-          ip_address:ip
-
-      }
-    );
- 
-  logger.info("Payment order created successfully", {
-    userId,
-    brokerId,
-    orderId: order.id,
-    amount,
-    plan,
-  });
-
-    return { order, payment };
-     
-  } catch(error) {
-    console.log(error)
-   logger.error("Payment creation error", { 
-    ip: data?.ip || "unknown", 
-    userId: data?.userData?.userId, 
-    error: error.message, 
-    stack: error.stack 
-  });
-  throw error;
-  }
+  async function createPayment(data, ip) {
+    try {
+      const { plan, userData } = data;
+      const { name, email, contact, userId, domainName, ctclId, brokerId ,amount } = userData || {};
   
-}
+      // INPUT VALIDATION: Validate required fields exist
+      if (!plan || !userData) {
+        logger.error("Payment creation failed - missing required fields", { ip, plan, userData });
+        throw new AppError("Plan and user data are required", StatusCodes.BAD_REQUEST);
+      }
+  
+      // CONSISTENCY VALIDATION: Validate plan exists in our system
+      const validPlans = ["STARTER", "GROWTH", "PRO", "ELITE"];
+      if (!validPlans.includes(plan)) {
+        logger.error("Invalid plan selected", { plan, ip, validPlans });
+        throw new AppError(`Invalid plan. Valid plans are: ${validPlans.join(', ')}`, StatusCodes.BAD_REQUEST);
+      }
+  
+      // Get selected plan and extract details
+      const selectedPlan = planData.find((p) => p.plan === plan);
+      if (!selectedPlan) {
+        logger.error("Plan not found in system", { plan, ip });
+        throw new AppError("Selected plan is not available", StatusCodes.BAD_REQUEST);
+      }
+      
+      const {  description } = selectedPlan;
+      
+      // CONSISTENCY VALIDATION: Validate amount constraints (business rules)
+      // Convert from paisa to rupees for validation
+      if (amount > amountConfig.MAX_AMOUNT) {
+        logger.error("Amount exceeds business limit", { amount, maxAmount: amountConfig.MAX_AMOUNT, ip });
+        throw new AppError(`Amount exceeds the maximum limit of ₹${amountConfig.MAX_AMOUNT}`, StatusCodes.BAD_REQUEST);
+      }
+  
+      if (amount < amountConfig.MIN_AMOUNT) {
+        logger.error("Amount below business minimum", { amount, minAmount: amountConfig.MIN_AMOUNT, ip });
+        throw new AppError(`Amount is below the minimum limit of ₹${amountConfig.MIN_AMOUNT}`, StatusCodes.BAD_REQUEST);
+      }
+  
+      // CONSISTENCY VALIDATION: Check user payment status (business rule - one successful payment per user)
+      const existingSuccessfulPayment = await paymentRepository.checkSuccessfulPaymentByUserId(userId);
+      if (existingSuccessfulPayment) {
+        logger.warn("Payment creation blocked - user already has successful payment", { 
+          userId, 
+          existingPaymentId: existingSuccessfulPayment.id,
+          ip 
+        });
+  
+        return {
+          success: false,
+          message: "User already has a successful payment",
+          data: {
+            userId: userId,
+            existingPaymentId: existingSuccessfulPayment.id,
+            transactionStatus: existingSuccessfulPayment.transaction_status,
+            paymentDate: existingSuccessfulPayment.createdAt,
+            plan: existingSuccessfulPayment.plan
+          },
+          code: "USER_ALREADY_EXISTS"
+        };
+      }
+  
+      // CONSISTENCY VALIDATION: Check for existing pending/failed payments (retry logic)
+      const existingUser = await paymentRepository.findByUserId(userId);
+      if (existingUser) {
+        logger.info("Existing user found", { 
+          userId, 
+          ip,
+          status: existingUser.payment_status
+        });
+  
+        // Business rule: If payment already SUCCESS — block new payment
+        if (existingUser.payment_status === "SUCCESS") {
+          logger.warn("User already has successful payment", { userId, ip });
+          return {
+            success: false,
+            message: "User already completed payment successfully",
+            data: {
+              userId,
+              existingPaymentId: existingUser.id,
+              plan: existingUser.plan,
+              paymentStatus: existingUser.payment_status,
+              paymentDate: existingUser.createdAt
+            },
+            code: "USER_ALREADY_PAID"
+          };
+        }
+  
+        // Business rule: Allow retry for pending/failed payments
+        logger.info("User has pending/failed payment - allowing retry", {
+          userId,
+          orderId: existingUser.order_id,
+          status: existingUser.payment_status
+        });
+  
+        return {
+          success: true,
+          message: "User has an unfinished payment. Use this order ID to retry.",
+          data: {
+            userId,
+            id: existingUser.order_id,
+            paymentStatus: existingUser.payment_status,
+            plan: existingUser.plan,
+            amount: existingUser.amount
+          },
+          code: "RETRY_PAYMENT"
+        };
+      }
+  
+      // Create new payment order with Razorpay
+      const options = {
+        amount,
+        currency: "INR",
+        receipt: `receipt_${Date.now()}`,
+        notes: {
+          plan, // Fixed: use planName instead of plan
+          description: description, // Fixed: use description instead of email
+          email: email // Keep email for reference
+        },
+      };
+  
+      const order = await razorpay.orders.create(options);
+  
+      // Create payment record in database
+      const payment = await paymentRepository.createPayment({
+        name,
+        email,
+        contact,
+        userId,
+        userDomainUrl: domainName,
+        amount, // Fixed: Convert from paisa to rupees
+        description, // Fixed: Include description field
+        order_id: order.id,
+        payment_status: "INITIATED",
+        plan,
+        ctclId,
+        brokerId,
+        ip_address: ip
+      });
+   
+      logger.info("Payment order created successfully", {
+        userId,
+        brokerId,
+        orderId: order.id,
+        amount: amountInRupees,
+        plan,
+      });
+  
+      return { 
+        success: true,
+        order, 
+        payment 
+      };
+       
+    } catch(error) {
+      console.log(error)
+      logger.error("Payment creation error", { 
+        ip: data?.ip || "unknown", 
+        userId: data?.userData?.userId, 
+        error: error.message, 
+        stack: error.stack 
+      });
+      throw error;
+    }
+  }
+
+
+
+
+
+
+
 
 async function verifyPayment(data) {
  try {
@@ -250,10 +267,10 @@ try {
             .json(ErrorResponse)
   }
 
-  // console.log("******************************* Webhook Data *******************************");
-  // console.log(JSON.stringify(req.body, null, 2));
-  // logger.info("webhook  data ",JSON.stringify(req.body ));
-  // console.log("***************************************************************************");
+  console.log("******************************* Webhook Data *******************************");
+  console.log(JSON.stringify(req.body, null, 2));
+  logger.info("webhook  data ",JSON.stringify(req.body ));
+  console.log("***************************************************************************");
 
   const rawBody = JSON.stringify(req.body);
   const isWebhookValid = validateWebhookSignature(
@@ -295,8 +312,8 @@ try {
      method: paymentDetails.method || null,
     currency: paymentDetails.currency || null,
     vpa: paymentDetails.vpa || paymentDetails?.upi?.vpa || null,
-    fee: (paymentDetails.fee || 0)/100,
-    tax: (paymentDetails.tax || 0)/100,
+    fee: (paymentDetails.fee || 0),
+    tax: (paymentDetails.tax || 0),
     acquirer_data: paymentDetails.acquirer_data || {},
     notes: paymentDetails.notes || {},
     ip_address: ip,

@@ -4,28 +4,7 @@ const { StatusCodes } = require('http-status-codes');
 const {PaymentService}= require("../services")
  const {logger} = require("../config")
 
-//  async function createPayment(req, res) {
-//     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-//          const {plan , userData }= req.body;
-//          logger.info('Create Payment request received', { ip, body: req.body });
-//       try{
-//         const response = await PaymentService.createPayment(req.body, ip);
-//             SuccessResponse.data = response.order;
-//               SuccessResponse.message = 'Payment created successfully';
-//               logger.info('Payment created successfully', { ip, orderId: response.order.id });
 
-//               return res.status(StatusCodes.OK).json(SuccessResponse);
-
-//       }catch(error){
-//        ErrorResponse.error = error.explanation || 'Something went wrong';
-//     ErrorResponse.message = 'Payment creation failed';
-//     logger.error('Payment creation error', { ip, error: error.message, stack: error.stack });
-
-//     return res
-//       .status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR)
-//       .json(ErrorResponse);
-//       }
-//  }
 async function createPayment(req, res) {
    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
         const {plan , userData }= req.body;

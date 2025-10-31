@@ -57,7 +57,17 @@ const schemas = {
         .required()
         .messages({
           'string.empty': 'Broker ID is required'
-        })
+        }),
+      amount: Joi.number()
+        .min(1)
+        .required()
+        .positive()
+        .messages({
+          'number.base': 'Amount must be a valid number',
+          'number.min': 'Amount must be at least 1',
+          'number.positive': 'Amount must be a positive number',
+          'any.required': 'Amount is required'
+        }),
     }).required().messages({
       'any.required': 'User data is required'
     })
@@ -170,7 +180,17 @@ const schemas = {
       .required()
       .messages({
         'string.empty': 'Broker ID is required'
-      })
+      }),
+        amount: Joi.number()
+        .min(1)
+        .required()
+        .positive()
+        .messages({
+          'number.base': 'Amount must be a valid number',
+          'number.min': 'Amount must be at least 1',
+          'number.positive': 'Amount must be a positive number',
+          'any.required': 'Amount is required'
+        }),
   }),
 
   decodeUrl: Joi.object({

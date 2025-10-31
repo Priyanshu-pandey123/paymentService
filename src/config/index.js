@@ -5,6 +5,7 @@ module.exports = {
     RazorConfig:require('./razorpay-config'),
     logger:require("./logger-config"),
     dbConfig:require('./db-config'),
-    testDbConnection:require("./dbConnect")
+    testDbConnection:require("./dbConnect"),
+    amountConfig:require("./amount-config")
    
 }

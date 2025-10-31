@@ -12,6 +12,7 @@ class PaymentRepository extends CrudRepository {
     }
     
     async createPayment(data) {
+       
         try {
             logger.info('Repository: Creating payment record', { 
                 userId: data.userId,
@@ -42,7 +43,7 @@ class PaymentRepository extends CrudRepository {
 
     async findByUserId(userId){
 
-        console.log(userId,'*&^%$#%^&*()*&^%$E%^&*(&^%$%^&*&^%$#%^&*(&^%$')
+        
          try {
             logger.debug('Repository: Finding payment by user ID', { userId });
             const payment = await Payment.findOne({ where: { userId: userId } });
