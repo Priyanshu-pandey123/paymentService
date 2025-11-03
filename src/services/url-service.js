@@ -57,20 +57,47 @@ function createHmac(data) {
 }
 
 // Generate secure URL
-async function generateUrl(req) {
-  const { name, email, contact, userId, domainName,ctclId,plan,brokerId , amount} = req.body;
+// async function generateUrl(req) {
+//   const { name, email, contact, userId, domainName,ctclId,plan,brokerId , amount} = req.body;
 
-  if (!name || !email || !contact || !userId || !domainName || !ctclId  ||  !plan || !brokerId || !amount) {
+//   if (!name || !email || !contact || !userId || !domainName || !ctclId  ||  !plan || !brokerId || !amount) {
+//     throw new AppError("All fields are required", 400);
+//   }
+
+//   const payload = { name, email, contact, userId, domainName ,ctclId,plan,brokerId, amount};
+//   const encryptedPayload = encodeURIComponent(encryptData(payload));
+//   const signature = createHmac(encryptedPayload);
+
+//   const frontendUrl= ServerConfig.FRONTEND_URL;
+//   return `${frontendUrl}?data=${encryptedPayload}&sig=${signature}`;
+
+
+
+
+// }
+async function generateUrl(req) {
+  const { name, email, contact, userId, domainName, ctclId, plan, brokerId, amount } = req.body;
+
+  if (!name || !email || !contact || !userId || !domainName || !ctclId || !plan || !brokerId || !amount) {
     throw new AppError("All fields are required", 400);
   }
 
-  const payload = { name, email, contact, userId, domainName ,ctclId,plan,brokerId, amount};
-  const encryptedPayload = encodeURIComponent(encryptData(payload));
+  const payload = { name, email, contact, userId, domainName, ctclId, plan, brokerId, amount };
+
+  // Step 1: Encrypt payload
+  const encryptedPayload = encryptData(payload);
+
+  // Step 2: Create signature on raw (unencoded) data
   const signature = createHmac(encryptedPayload);
 
-  const frontendUrl= ServerConfig.FRONTEND_URL;
-  return `${frontendUrl}?data=${encryptedPayload}&sig=${signature}`;
+  // Step 3: Encode payload for safe URL transfer
+  const encodedPayload = encodeURIComponent(encryptedPayload);
+
+  // Step 4: Return full URL
+  const frontendUrl = ServerConfig.FRONTEND_URL;
+  return `${frontendUrl}?data=${encodedPayload}&sig=${signature}`;
 }
+
 
 // Decode and verify URL data
 //  async function decodeUrl(data, sig) {

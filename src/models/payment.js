@@ -25,9 +25,6 @@ module.exports = (sequelize) => {
       userDomainUrl: {
         type: DataTypes.STRING(350),
         allowNull: false,
-        validate: {
-          isUrl: true,
-        },
       },
 
       ctclId: {
