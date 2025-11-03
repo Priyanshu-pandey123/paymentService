@@ -73,23 +73,48 @@ async function generateUrl(req) {
 }
 
 // Decode and verify URL data
- async function decodeUrl(data, sig) {
- logger.info("decodeUrl service invoked", { hasData: Boolean(data), hasSig: Boolean(sig) });
+//  async function decodeUrl(data, sig) {
+//  logger.info("decodeUrl service invoked", { hasData: Boolean(data), hasSig: Boolean(sig) });
 
-    if (!data || !sig) {
-      logger.warn("Missing data or signature in decodeUrl", { dataPresent: Boolean(data), sigPresent: Boolean(sig) });
-      throw new AppError("Missing data or signature", StatusCodes.BAD_REQUEST);
-    }
-    const expectedSig = createHmac(data);
+//     if (!data || !sig) {
+//       logger.warn("Missing data or signature in decodeUrl", { dataPresent: Boolean(data), sigPresent: Boolean(sig) });
+//       throw new AppError("Missing data or signature", StatusCodes.BAD_REQUEST);
+//     }
+//     // const expectedSig = createHmac(data); 
+//   if (expectedSig !== sig) {
+//       logger.warn("Invalid signature detected in decodeUrl", { dataSnippet: data.slice(0, 50) });
+//       throw new AppError("Invalid signature! Data may have been tampered with.", StatusCodes.UNAUTHORIZED);
+//     }
+//     const decryptedData = decryptData(decodeURIComponent(data));
+//      console.log(decryptData(decodeURIComponent(data)),'popopopopopopo')
+//   logger.info("decodeUrl successfully decrypted data", {  decryptedDataSnippet: JSON.stringify(decryptedData).slice(0, 100) });
+
+//   return decryptedData;
+// }
+
+async function decodeUrl(data, sig) {
+  logger.info("decodeUrl service invoked", { hasData: Boolean(data), hasSig: Boolean(sig) });
+
+  if (!data || !sig) {
+    throw new AppError("Missing data or signature", StatusCodes.BAD_REQUEST);
+  }
+
+  const decodedData = decodeURIComponent(data);  // decode first
+
+  const expectedSig = createHmac(decodedData);
   if (expectedSig !== sig) {
-      logger.warn("Invalid signature detected in decodeUrl", { dataSnippet: data.slice(0, 50) });
-      throw new AppError("Invalid signature! Data may have been tampered with.", StatusCodes.UNAUTHORIZED);
-    }
-    const decryptedData = decryptData(decodeURIComponent(data));
-  logger.info("decodeUrl successfully decrypted data", {  decryptedDataSnippet: JSON.stringify(decryptedData).slice(0, 100) });
+    logger.warn("Invalid signature detected in decodeUrl");
+    throw new AppError("Invalid signature! Data may have been tampered with.", StatusCodes.UNAUTHORIZED);
+  }
+
+  const decryptedData = decryptData(decodedData);
+  logger.info("decodeUrl successfully decrypted data", {
+    decryptedDataSnippet: JSON.stringify(decryptedData).slice(0, 100),
+  });
 
   return decryptedData;
 }
+
 
 module.exports = {
   generateUrl,
