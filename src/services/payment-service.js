@@ -36,7 +36,7 @@ async function createPayment(data,ip) {
     throw new AppError("Invalid plan selected", StatusCodes.BAD_REQUEST);
   }
 
-if (amount <= amountConfig.MIN_AMOUNT) {
+if (amount < amountConfig.MIN_AMOUNT) {
   logger.error("Payment amount too low", { amount, minAllowed: amountConfig.MIN_AMOUNT });
   throw new AppError(`Minimum payment amount is ₹${amountConfig.MIN_AMOUNT}`, StatusCodes.BAD_REQUEST);
 }
@@ -233,9 +233,6 @@ function validateWebhookSignature(body, signature, secret) {
   return expectedSignature === signature;
 }
 
-
-
-
 async function paymentWebhook(req, res) {
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 try {
@@ -250,10 +247,10 @@ try {
             .json(ErrorResponse)
   }
 
-  // console.log("******************************* Webhook Data *******************************");
-  // console.log(JSON.stringify(req.body, null, 2));
-  // logger.info("webhook  data ",JSON.stringify(req.body ));
-  // console.log("***************************************************************************");
+  console.log("******************************* Webhook Data *******************************");
+  console.log(JSON.stringify(req.body, null, 2));
+  logger.info("webhook  data ",JSON.stringify(req.body ));
+  console.log("***************************************************************************");
 
   const rawBody = JSON.stringify(req.body);
   const isWebhookValid = validateWebhookSignature(

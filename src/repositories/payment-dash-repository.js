@@ -60,21 +60,10 @@ class PaymentDashRepository extends CrudRepository {
     
     async getPaymentByUserId(userId) {
         try {
-            // Validate userId format (should be UUID)
-            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-            if (!uuidRegex.test(userId)) {
-                logger.warn('Dashboard: Invalid userId format', { userId });
-                return null;
-            }
-
+           
             const userPayments = await Payment.findAll({
                 where: { 
-                    userId,
-                    payment_verified: 'YES' // Only show verified payments
-                },
-                order: [["createdAt", "DESC"]],
-                attributes: {
-                    exclude: ['raw_payload'] // Don't expose sensitive webhook data
+                    userId,    
                 }
             });
 

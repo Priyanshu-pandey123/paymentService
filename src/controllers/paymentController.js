@@ -11,7 +11,7 @@ async function createPayment(req, res) {
         logger.info('Create Payment request received', { ip, body: req.body });
      try{
        const response = await PaymentService.createPayment(req.body, ip);
-        console.log(response,'from the conflit in  the db tbles ')
+       
        
    if (response.success && response.code === "RETRY_PAYMENT") {
   return res.status(StatusCodes.OK).json({
@@ -87,7 +87,7 @@ async function paymentWebhook(req, res) {
       logger.info('Payment webhook received', { ip, body: req.body });
    try{
        await PaymentService.paymentWebhook(req, res);
-           logger.info('Webhook processed successfully', { ip });
+        logger.info('Webhook processed successfully', { ip });
    }catch(error){
     logger.error("Webhook controller error", { error: error.message, stack: error.stack });
     ErrorResponse.error = error.explanation || 'Something went wrong';
