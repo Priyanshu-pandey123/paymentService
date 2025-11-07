@@ -15,7 +15,7 @@ const {
 } = require('./middlewares/security');
 
 const app = express();
-app.set('trust proxy', 1); // or true
+app.set('trust proxy', 1); 
 
 
 logger.info('🔄 Starting server initialization...', { 
@@ -70,10 +70,10 @@ logger.info('🔄 Starting server initialization...', {
     // }));
 
 app.use(cors({
-  origin: '*',           // allow requests from any origin
-  methods: '*',          // allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
-  allowedHeaders: '*',   // allow all headers
-  credentials: false     // don't send cookies/auth by default
+  origin: '*',           
+  methods: '*',          
+  allowedHeaders: '*',   
+  credentials: false  
 }));
     app.use(express.json({ limit: '1mb' }));
     app.use(express.urlencoded({ extended: true, limit: '1mb' }));

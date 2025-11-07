@@ -10,6 +10,7 @@ const crypto = require('crypto');
  const {planData}= require("../utils/plan")
 const {logger,RazorConfig}= require('../config');
 const { ErrorResponse } = require('../utils/common');
+const { sendPaymentStatusWebhook } = require('../utils/webhook/bull8WebHook');
 
 
  const paymentRepository=new PaymentRepository();
@@ -49,76 +50,76 @@ if (amount > amountConfig.MAX_AMOUNT) {
 
 
   // Check if user already has a successful payment
-const existingSuccessfulPayment = await paymentRepository.checkSuccessfulPaymentByUserId(userId);
-  if (existingSuccessfulPayment) {
-    logger.warn("Payment creation blocked - user already has successful payment", { 
-      userId, 
-      existingPaymentId: existingSuccessfulPayment.id,
-      ip 
-    });
+// const existingSuccessfulPayment = await paymentRepository.checkSuccessfulPaymentByUserId(userId);
+//   if (existingSuccessfulPayment) {
+//     logger.warn("Payment creation blocked - user already has successful payment", { 
+//       userId, 
+//       existingPaymentId: existingSuccessfulPayment.id,
+//       ip 
+//     });
     
 
     
-    return {
-      success: false,
-      message: "User already exists with successful payment",
-      data: {
-        userId: userId,
-        existingPaymentId: existingSuccessfulPayment.id,
-        transactionStatus: existingSuccessfulPayment.transaction_status,
-        paymentDate: existingSuccessfulPayment.createdAt,
-        plan: existingSuccessfulPayment.plan
-      },
-      code: "USER_ALREADY_EXISTS"
-    };
-  }
+//     return {
+//       success: false,
+//       message: "User already exists with successful payment",
+//       data: {
+//         userId: userId,
+//         existingPaymentId: existingSuccessfulPayment.id,
+//         transactionStatus: existingSuccessfulPayment.transaction_status,
+//         paymentDate: existingSuccessfulPayment.createdAt,
+//         plan: existingSuccessfulPayment.plan
+//       },
+//       code: "USER_ALREADY_EXISTS"
+//     };
+//   }
 
-const existingUser = await paymentRepository.findByUserId(userId);
+// const existingUser = await paymentRepository.findByUserId(userId);
 
-if (existingUser) {
-  logger.info("Existing user found in DB", { 
-    userId, 
-    ip,
-    status: existingUser.payment_status
-  });
+// if (existingUser) {
+//   logger.info("Existing user found in DB", { 
+//     userId, 
+//     ip,
+//     status: existingUser.payment_status
+//   });
 
-  // Case 1: If payment already SUCCESS — block new payment
-  if (existingUser.payment_status === "SUCCESS") {
-    logger.warn("User already has a successful payment", { userId, ip });
-    return {
-      success: false,
-      message: "User already completed payment successfully",
-      data: {
-        userId,
-        existingPaymentId: existingUser.id,
-        plan: existingUser.plan,
-        paymentStatus: existingUser.payment_status,
-        paymentDate: existingUser.createdAt
-      },
-      code: "USER_ALREADY_PAID"
-    };
-  }
+//   // Case 1: If payment already SUCCESS — block new payment
+//   if (existingUser.payment_status === "SUCCESS") {
+//     logger.warn("User already has a successful payment", { userId, ip });
+//     return {
+//       success: false,
+//       message: "User already completed payment successfully",
+//       data: {
+//         userId,
+//         existingPaymentId: existingUser.id,
+//         plan: existingUser.plan,
+//         paymentStatus: existingUser.payment_status,
+//         paymentDate: existingUser.createdAt
+//       },
+//       code: "USER_ALREADY_PAID"
+//     };
+//   }
 
-  // Case 2: If payment not successful — allow retry with existing order_id
-  logger.info("User has pending/failed payment - returning existing order ID", {
-    userId,
-    orderId: existingUser.order_id,
-    status: existingUser.payment_status
-  });
+//   // Case 2: If payment not successful — allow retry with existing order_id
+//   logger.info("User has pending/failed payment - returning existing order ID", {
+//     userId,
+//     orderId: existingUser.order_id,
+//     status: existingUser.payment_status
+//   });
 
-  return {
-    success: true,
-    message: "User has an unfinished payment. Use this order ID to retry.",
-    data: {
-      userId,
-      id: existingUser.order_id,
-      paymentStatus: existingUser.payment_status,
-      plan: existingUser.plan,
-      amount: existingUser.amount
-    },
-    code: "RETRY_PAYMENT"
-  };
-}
+//   return {
+//     success: true,
+//     message: "User has an unfinished payment. Use this order ID to retry.",
+//     data: {
+//       userId,
+//       id: existingUser.order_id,
+//       paymentStatus: existingUser.payment_status,
+//       plan: existingUser.plan,
+//       amount: existingUser.amount
+//     },
+//     code: "RETRY_PAYMENT"
+//   };
+// }
 
 
     const { description} = selectedPlan;
@@ -406,6 +407,48 @@ try {
       planValid: updates.is_plan_valid,
       planValidTill: updates.plan_valid_till
     });
+
+    // Send custom webhook with user and transaction data
+    try {
+      const webhookData = {
+        userId: updatedPayment.userId,
+        name: updatedPayment.name,
+        email: updatedPayment.email,
+        contact: updatedPayment.contact,
+        userDomainUrl: updatedPayment.userDomainUrl,
+        ctclId: updatedPayment.ctclId,
+        brokerId: updatedPayment.brokerId,
+        plan: updatedPayment.plan,
+        orderId: updatedPayment.order_id,
+        paymentId: updatedPayment.payment_id,
+        amount: updatedPayment.amount,
+        currency: updatedPayment.currency,
+        transactionStatus: updatedPayment.transaction_status,
+        paymentVerified: updatedPayment.payment_verified,
+        isPlanValid: updatedPayment.is_plan_valid,
+        planValidTill: updatedPayment.plan_valid_till,
+        paymentGateway: updatedPayment.payment_gateway,
+        method: updatedPayment.method,
+        vpa: updatedPayment.vpa,
+        fee: updatedPayment.fee,
+        tax: updatedPayment.tax,
+        webhookReceivedAt: updatedPayment.pg_webhook_received_at,
+        timestampWebhookCalled: updatedPayment.timestamp_webhook_called
+      };
+
+      await sendPaymentStatusWebhook(webhookData);
+      
+      logger.info("Custom payment status webhook sent successfully", {
+        orderId: updatedPayment.order_id,
+        userId: updatedPayment.userId
+      });
+    } catch (webhookError) {
+      logger.error("Failed to send custom payment status webhook", {
+        orderId: updatedPayment.order_id,
+        error: webhookError.message
+      });
+      // Don't fail the main webhook response due to custom webhook failure
+    }
   } else {
     logger.error("Webhook processed but database update failed", {
       ip,
