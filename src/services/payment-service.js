@@ -6,22 +6,15 @@ const { ServerConfig, amountConfig } = require('../config')
 const db = require('../models');
 const AppError = require('../utils/errors/app-error');
 const crypto = require('crypto');
-// const {Enums} = require('../utils/common');
- const {planData}= require("../utils/plan")
+const {planData}= require("../utils/plan")
 const {logger,RazorConfig}= require('../config');
 const { ErrorResponse } = require('../utils/common');
 const { sendPaymentStatusWebhook } = require('../utils/webhook/bull8WebHook');
-
-
- const paymentRepository=new PaymentRepository();
-
+const paymentRepository=new PaymentRepository();
 const razorpay = new Razorpay({
     key_id: RazorConfig.RAZORPAY_KEY_ID,
     key_secret:RazorConfig.RAZORPAY_SECRET,
-  });
-
-
-
+});
 async function createPayment(data,ip) {
   try {
     const { plan, userData } = data;
@@ -177,7 +170,6 @@ if (amount > amountConfig.MAX_AMOUNT) {
   }
   
 }
-
 async function verifyPayment(data) {
  try {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = data;
@@ -223,8 +215,6 @@ async function verifyPayment(data) {
     throw error;
  }
 }
-
-
 function validateWebhookSignature(body, signature, secret) {
   const expectedSignature = crypto
     .createHmac('sha256', secret)
@@ -233,7 +223,6 @@ function validateWebhookSignature(body, signature, secret) {
   
   return expectedSignature === signature;
 }
-
 async function paymentWebhook(req, res) {
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 try {
@@ -471,7 +460,6 @@ try {
   return res.status(500).json({ success: false, error: "Server error" });
 }
 }
-
 async function cancelPayment(orderId) {
   try {
  
@@ -513,7 +501,6 @@ async function cancelPayment(orderId) {
      throw error;
   }
  }
-
 module.exports = {
     createPayment,
     verifyPayment,

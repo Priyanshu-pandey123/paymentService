@@ -47,11 +47,8 @@ const info = async (req, res) => {
         createdAt: "2025-11-07T05:47:58.000Z",
         updatedAt: "2025-11-07T05:48:31.000Z",
       };
-      
-
-      await sendPaymentStatusWebhook(paymentStatusData);
-      
-    return res.status(StatusCodes.OK).json({
+      await sendPaymentStatusWebhook(paymentStatusData); 
+      return res.status(StatusCodes.OK).json({
         success: true,
         message: 'API is live',
         error: {},
