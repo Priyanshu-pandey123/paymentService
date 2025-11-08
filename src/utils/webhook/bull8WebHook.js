@@ -77,7 +77,7 @@ async function sendPaymentStatusWebhook(paymentData) {
 
     const response = await axios.post(WEBHOOK_URL, payload, { 
       headers,
-      timeout: 10000 // 10 second timeout
+      timeout: 10000 
     });
 
     console.log(response, 'from the webhook');
