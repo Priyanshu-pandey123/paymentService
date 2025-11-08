@@ -10,6 +10,7 @@ const {planData}= require("../utils/plan")
 const {logger,RazorConfig}= require('../config');
 const { ErrorResponse } = require('../utils/common');
 const WebhookService = require('./webhook-service');
+const WebhookRepository = require('../repositories/webhook-repository');
 const { sendPaymentStatusWebhook } = require('../utils/webhook/bull8WebHook');
 
 const paymentRepository=new PaymentRepository();
@@ -443,7 +444,6 @@ function validateWebhookSignature(body, signature, secret) {
 //   return res.status(500).json({ success: false, error: "Server error" });
 // }
 // }
-
 async function paymentWebhook(req, res) {
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   try {
@@ -467,6 +467,11 @@ async function paymentWebhook(req, res) {
 
     const payload = req.body;
     const paymentDetails = payload?.payload?.payment?.entity;
+
+      console.log("******************************* Webhook Data *******************************");
+  console.log(JSON.stringify(req.body, null, 2));
+  logger.info("webhook  data ",JSON.stringify(req.body ));
+  console.log("***************************************************************************");
 
     if (!paymentDetails) {
       return res.status(400).json({ success: false, error: "No payment details found" });
@@ -539,9 +544,6 @@ async function paymentWebhook(req, res) {
     return res.status(500).json({ success: false, error: "Server error" });
   }
 }
-
-
-
 async function cancelPayment(orderId) {
   try {
  
