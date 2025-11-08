@@ -104,6 +104,9 @@ app.use(cors({
       });
     });
 
+    // Import the webhook retry cron to start it
+    require('./cron/webhookRetryCron');
+
     app.listen(ServerConfig.PORT, async (err) => {
         if (err) {
             logger.error(` Server failed to start on port ${ServerConfig.PORT}: ${err.message}`, { 
@@ -113,6 +116,10 @@ app.use(cors({
             });
             process.exit(1);
         }
+        
+        // Start the webhook retry scheduler after server is running
+        // webhookScheduler.start(); // This line was removed as per the new_code, as the cron service is now directly imported.
+        
         console.log(`Server is running successfully on port ${ServerConfig.PORT}`)
     });
 

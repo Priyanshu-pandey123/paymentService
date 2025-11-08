@@ -99,6 +99,156 @@ class WebhookRepository {
             throw error;
         }
     }
+
+    async findByOrderIdAndStatus(orderId, status) {
+        try {
+            return await WebhookLog.findOne({
+                where: {
+                    payment_order_id: orderId,
+                    status: status
+                }
+            });
+        } catch (error) {
+            logger.error('Failed to find webhook by order ID and status', { orderId, status, error: error.message });
+            throw error;
+        }
+    }
+
+    async findAll(options = {}) {
+        try {
+            const {
+                page = 1,
+                limit = 10,
+                status,
+                payment_order_id,
+                sortBy = 'createdAt',
+                sortOrder = 'DESC'
+            } = options;
+
+            const offset = (page - 1) * limit;
+            const whereClause = {};
+
+            if (status) {
+                whereClause.status = status;
+            }
+
+            if (payment_order_id) {
+                whereClause.payment_order_id = payment_order_id;
+            }
+
+            const { count, rows } = await WebhookLog.findAndCountAll({
+                where: whereClause,
+                limit: limit,
+                offset: offset,
+                order: [[sortBy, sortOrder.toUpperCase()]]
+            });
+
+            return {
+                webhooks: rows,
+                pagination: {
+                    currentPage: page,
+                    totalPages: Math.ceil(count / limit),
+                    totalItems: count,
+                    itemsPerPage: limit
+                }
+            };
+        } catch (error) {
+            logger.error('Failed to find webhooks with pagination', { options, error: error.message });
+            throw error;
+        }
+    }
+
+    async getWebhookStats() {
+        try {
+            const stats = await WebhookLog.findAll({
+                attributes: [
+                    'status',
+                    [require('sequelize').fn('COUNT', require('sequelize').col('id')), 'count']
+                ],
+                group: ['status']
+            });
+
+            const result = {
+                total: 0,
+                pending: 0,
+                success: 0,
+                failed: 0,
+                retrying: 0
+            };
+
+            stats.forEach(stat => {
+                const status = stat.dataValues.status.toLowerCase();
+                const count = parseInt(stat.dataValues.count);
+                result[status] = count;
+                result.total += count;
+            });
+
+            return result;
+        } catch (error) {
+            logger.error('Failed to get webhook stats', { error: error.message });
+            throw error;
+        }
+    }
+
+    async findByUserAndUuid(userId, uuid, options = {}) {
+        try {
+            const {
+                page = 1,
+                limit = 10,
+                status,
+                sortBy = 'createdAt',
+                sortOrder = 'DESC'
+            } = options;
+
+            const offset = (page - 1) * limit;
+            const whereClause = {};
+
+            // Add filters for userId and uuid from JSON payload
+            if (userId) {
+                whereClause[require('sequelize').Op.and] = whereClause[require('sequelize').Op.and] || [];
+                whereClause[require('sequelize').Op.and].push(
+                    require('sequelize').where(
+                        require('sequelize').fn('JSON_EXTRACT', require('sequelize').col('payload'), '$.UserId'),
+                        userId
+                    )
+                );
+            }
+
+            if (uuid) {
+                whereClause[require('sequelize').Op.and] = whereClause[require('sequelize').Op.and] || [];
+                whereClause[require('sequelize').Op.and].push(
+                    require('sequelize').where(
+                        require('sequelize').fn('JSON_EXTRACT', require('sequelize').col('payload'), '$.Uuid'),
+                        uuid
+                    )
+                );
+            }
+
+            if (status) {
+                whereClause.status = status;
+            }
+
+            const { count, rows } = await WebhookLog.findAndCountAll({
+                where: whereClause,
+                limit: limit,
+                offset: offset,
+                order: [[sortBy, sortOrder.toUpperCase()]]
+            });
+
+            return {
+                webhooks: rows,
+                pagination: {
+                    currentPage: page,
+                    totalPages: Math.ceil(count / limit),
+                    totalItems: count,
+                    itemsPerPage: limit
+                }
+            };
+        } catch (error) {
+            logger.error('Failed to find webhooks by user and uuid', { userId, uuid, options, error: error.message });
+            throw error;
+        }
+    }
 }
 
 module.exports = WebhookRepository;

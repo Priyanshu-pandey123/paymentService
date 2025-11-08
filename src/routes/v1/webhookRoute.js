@@ -14,4 +14,7 @@ router.get('/stats', (req, res) => webhookController.getWebhookStats(req, res));
 // GET /api/v1/webhook/:id - Get webhook by ID
 router.get('/:id', (req, res) => webhookController.getWebhookById(req, res));
 
+// GET /api/v1/webhook/user-uuid - Get webhooks by user ID and UUID
+router.get('/user-uuid', (req, res) => webhookController.getWebhooksByUserAndUuid(req, res));
+
 module.exports = router;

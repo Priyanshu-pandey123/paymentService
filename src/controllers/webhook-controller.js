@@ -139,6 +139,89 @@ class WebhookController {
             });
         }
     }
+
+    async getWebhooksByUserAndUuid(req, res) {
+        try {
+            const {
+                page = 1,
+                limit = 10,
+                userId,
+                uuid,
+                status,
+                sortBy = 'createdAt',
+                sortOrder = 'DESC'
+            } = req.query;
+
+            // Validate required parameters
+            if (!userId && !uuid) {
+                return res.status(StatusCodes.BAD_REQUEST).json({
+                    success: false,
+                    message: 'At least one of userId or uuid is required',
+                    error: {},
+                    data: {}
+                });
+            }
+
+            // Validate inputs
+            const validStatuses = ['PENDING', 'SUCCESS', 'FAILED', 'RETRYING'];
+            if (status && !validStatuses.includes(status.toUpperCase())) {
+                return res.status(StatusCodes.BAD_REQUEST).json({
+                    success: false,
+                    message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`,
+                    error: {},
+                    data: {}
+                });
+            }
+
+            const validSortFields = ['id', 'createdAt', 'updatedAt', 'status', 'attempt_count', 'last_attempt_at'];
+            if (!validSortFields.includes(sortBy)) {
+                return res.status(StatusCodes.BAD_REQUEST).json({
+                    success: false,
+                    message: `Invalid sort field. Must be one of: ${validSortFields.join(', ')}`,
+                    error: {},
+                    data: {}
+                });
+            }
+
+            const options = {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                status: status ? status.toUpperCase() : undefined,
+                sortBy,
+                sortOrder
+            };
+
+            const result = await this.webhookRepository.findByUserAndUuid(userId, uuid, options);
+
+            logger.info('Fetched webhooks by user and uuid', { 
+                userId,
+                uuid,
+                count: result.webhooks.length, 
+                page: options.page,
+                status: options.status 
+            });
+
+            return res.status(StatusCodes.OK).json({
+                success: true,
+                message: 'Webhooks retrieved successfully',
+                error: {},
+                data: result
+            });
+
+        } catch (error) {
+            logger.error('Error fetching webhooks by user and uuid', { 
+                userId: req.query.userId,
+                uuid: req.query.uuid,
+                error: error.message 
+            });
+            return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+                success: false,
+                message: 'Failed to retrieve webhooks',
+                error: error.message,
+                data: {}
+            });
+        }
+    }
 }
 
 module.exports = WebhookController;
