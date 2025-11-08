@@ -469,9 +469,9 @@ async function paymentWebhook(req, res) {
     const paymentDetails = payload?.payload?.payment?.entity;
 
       console.log("******************************* Webhook Data *******************************");
-  console.log(JSON.stringify(req.body, null, 2));
-  logger.info("webhook  data ",JSON.stringify(req.body ));
-  console.log("***************************************************************************");
+      console.log(JSON.stringify(req.body, null, 2));
+      logger.info("webhook  data ",JSON.stringify(req.body ));
+      console.log("***************************************************************************");
 
     if (!paymentDetails) {
       return res.status(400).json({ success: false, error: "No payment details found" });
@@ -516,10 +516,23 @@ async function paymentWebhook(req, res) {
       try {
         const webhookService = new WebhookService();
         const webhookRepository = new WebhookRepository();
-    
+
+        // Check if a successful webhook has already been sent for this order
+        const existingSuccessfulWebhook = await webhookRepository.findByOrderIdAndStatus(
+          updatedPayment.order_id, 
+          'SUCCESS'
+        );
+
+        if (existingSuccessfulWebhook) {
+          logger.info("Webhook already successfully sent for this order, skipping", {
+            orderId: updatedPayment.order_id,
+            existingWebhookId: existingSuccessfulWebhook.id
+          });
+          return;
+        }
+
         const payload = webhookService.preparePayload(updatedPayment);
         const signature = webhookService.generateSignature(payload);
-    
 
         const log = await webhookRepository.create({
           payment_order_id: updatedPayment.order_id,
@@ -531,10 +544,8 @@ async function paymentWebhook(req, res) {
           max_attempts: 5,
           next_retry_at: new Date()
         });
-    
-        // ✅ 2. Immediately attempt sending webhook ONCE
+
         await webhookService.attemptWebhook(log.id, payload, signature);
-    
       } catch (err) {
         logger.error("Failed to queue + send webhook", { error: err.message });
       }

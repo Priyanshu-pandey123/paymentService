@@ -1,9 +1,10 @@
 const { StatusCodes } = require('http-status-codes');
 const { sendPaymentStatusWebhook } = require('../utils/webhook/bull8WebHook');
+const WebhookService = require('../services/webhook-service');
 
 const info = async (req, res) => {
     const paymentStatusData = {
-        uuid: "6067ad32-dd11-4413-98ec-8aed02ed3d2f",
+        uuid: "521d448c-1bdf-4199-9650-8f58d0a79653",
         userId: "YASH",
         userDomainUrl: "http://localhost:3002/dashboard/subscriptionplan/status",
         ctclId: "d2bcde75-a382-4a8b-a0d2-b0e58483fbb0",
@@ -47,17 +48,35 @@ const info = async (req, res) => {
         createdAt: "2025-11-07T05:47:58.000Z",
         updatedAt: "2025-11-07T05:48:31.000Z",
       };
-      await sendPaymentStatusWebhook(paymentStatusData); 
-      return res.status(StatusCodes.OK).json({
-        success: true,
-        message: 'API is live',
-        error: {},
-        data: {},
-    });
+
+    try {
+        // Test the webhook with retry mechanism
+        const webhookService = new WebhookService();
+        const result = await webhookService.sendWebhook(paymentStatusData, 3); // 3 max retries
+        
+        return res.status(StatusCodes.OK).json({
+            success: true,
+            message: 'Webhook test completed',
+            error: {},
+            data: {
+                webhookResult: result,
+                testData: {
+                    orderId: paymentStatusData.order_id,
+                    maxRetries: 3,
+                    webhookUrl: webhookService.WEBHOOK_URL
+                }
+            },
+        });
+    } catch (error) {
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: 'Webhook test failed',
+            error: error.message,
+            data: {},
+        });
+    }
 }
 
 module.exports = {
     info,
-  
 }
-

@@ -104,7 +104,7 @@ class WebhookService {
                 headers,
                 timeout: 10000 // 10 second timeout
             });
-
+          console.log(response, 'called by webhook')
             // Mark as success
             await this.webhookRepository.markAsSuccess(webhookLogId, {
                 status: response.status,
