@@ -535,7 +535,7 @@ async function paymentWebhook(req, res) {
         const signature = webhookService.generateSignature(payload);
 
         const log = await webhookRepository.create({
-          payment_order_id: updatedPayment.order_id,
+          payment_uuid: updatedPayment.uuid,  // Changed from payment_order_id: updatedPayment.order_id
           webhook_url: webhookService.WEBHOOK_URL,
           payload,
           signature,

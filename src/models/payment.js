@@ -5,8 +5,8 @@ module.exports = (sequelize) => {
   class Payment extends Model {
     static associate(models) {
       Payment.hasOne(models.WebhookLog, {
-        foreignKey: 'payment_order_id',
-        sourceKey: 'order_id',
+        foreignKey: 'payment_uuid',
+        sourceKey: 'uuid',
         as: 'webhookLog'
       });
     }

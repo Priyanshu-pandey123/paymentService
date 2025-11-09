@@ -13,7 +13,7 @@ class WebhookController {
                 page = 1,
                 limit = 10,
                 status,
-                payment_order_id,
+                payment_uuid,  // Changed from payment_order_id
                 sortBy = 'createdAt',
                 sortOrder = 'DESC'
             } = req.query;
@@ -43,7 +43,7 @@ class WebhookController {
                 page: parseInt(page),
                 limit: parseInt(limit),
                 status: status ? status.toUpperCase() : undefined,
-                payment_order_id,
+                payment_uuid,  // Changed from payment_order_id
                 sortBy,
                 sortOrder
             };

@@ -5,8 +5,8 @@ module.exports = (sequelize) => {
   class WebhookLog extends Model {
     static associate(models) {
       WebhookLog.belongsTo(models.Payment, {
-        foreignKey: 'payment_order_id',
-        targetKey: 'order_id',
+        foreignKey: 'payment_uuid',
+        targetKey: 'uuid',
         as: 'payment'
       });
     }
@@ -20,9 +20,13 @@ module.exports = (sequelize) => {
         autoIncrement: true,
         allowNull: false,
       },
-      payment_order_id: {
-        type: DataTypes.STRING,
+      payment_uuid: {
+        type: DataTypes.UUID,
         allowNull: false,
+        references: {
+          model: 'payments',
+          key: 'uuid'
+        }
       },
       webhook_url: {
         type: DataTypes.STRING(500),

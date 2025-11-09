@@ -5,7 +5,7 @@ class WebhookRepository {
     async create(webhookData) {
         try {
             const webhookLog = await WebhookLog.create(webhookData);
-            logger.info('Webhook log created', { id: webhookLog.id, orderId: webhookData.payment_order_id });
+            logger.info('Webhook log created', { id: webhookLog.id, paymentUuid: webhookData.payment_uuid });
             return webhookLog;
         } catch (error) {
             logger.error('Failed to create webhook log', { error: error.message, data: webhookData });
@@ -104,7 +104,7 @@ class WebhookRepository {
         try {
             return await WebhookLog.findOne({
                 where: {
-                    payment_order_id: orderId,
+                    payment_uuid: orderId,
                     status: status
                 }
             });
@@ -120,7 +120,7 @@ class WebhookRepository {
                 page = 1,
                 limit = 10,
                 status,
-                payment_order_id,
+                payment_uuid,
                 sortBy = 'createdAt',
                 sortOrder = 'DESC'
             } = options;
@@ -132,8 +132,8 @@ class WebhookRepository {
                 whereClause.status = status;
             }
 
-            if (payment_order_id) {
-                whereClause.payment_order_id = payment_order_id;
+            if (payment_uuid) {
+                whereClause.payment_uuid = payment_uuid;
             }
 
             const { count, rows } = await WebhookLog.findAndCountAll({

@@ -27,7 +27,7 @@ class WebhookService {
 
         // Create webhook log entry
         const webhookLog = await this.webhookRepository.create({
-            payment_order_id: paymentData.orderId || paymentData.order_id,
+            payment_uuid: paymentData.uuid || paymentData.Uuid,
             webhook_url: this.WEBHOOK_URL,
             payload: payload,
             max_attempts: maxRetries,
