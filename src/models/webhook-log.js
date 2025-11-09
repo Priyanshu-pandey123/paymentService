@@ -4,7 +4,11 @@ const { Model, DataTypes } = require('sequelize');
 module.exports = (sequelize) => {
   class WebhookLog extends Model {
     static associate(models) {
-      // define associations here if needed later
+      WebhookLog.belongsTo(models.Payment, {
+        foreignKey: 'payment_order_id',
+        targetKey: 'order_id',
+        as: 'payment'
+      });
     }
   }
 

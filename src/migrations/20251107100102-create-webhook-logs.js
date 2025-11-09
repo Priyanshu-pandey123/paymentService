@@ -10,10 +10,16 @@ module.exports = {
         autoIncrement: true,
         allowNull: false
       },
-      payment_order_id: {
-        type: Sequelize.STRING,
+      payment_uuid: {
+        type: Sequelize.UUID,
         allowNull: false,
-        comment: 'Reference to payment order_id'
+        unique: true, 
+        references: {
+          model: 'payments',
+          key: 'uuid'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
       },
       webhook_url: {
         type: Sequelize.STRING(500),
@@ -77,7 +83,7 @@ module.exports = {
     });
 
     // Add indexes for performance
-    await queryInterface.addIndex('webhook_logs', ['payment_order_id']);
+    await queryInterface.addIndex('webhook_logs', ['payment_uuid']);
     await queryInterface.addIndex('webhook_logs', ['status']);
     await queryInterface.addIndex('webhook_logs', ['next_retry_at']);
   },
