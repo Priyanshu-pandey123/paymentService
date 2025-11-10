@@ -25,6 +25,10 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      paymentId: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
 
       userDomainUrl: {
         type: DataTypes.STRING(350),

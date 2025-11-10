@@ -13,6 +13,10 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false
       },
+      paymentId: {
+        type: Sequelize.STRING,
+        allowNull: false
+      },
       userDomainUrl: {
         type: Sequelize.STRING(350),
         allowNull: false,

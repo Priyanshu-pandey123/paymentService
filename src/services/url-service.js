@@ -56,33 +56,15 @@ function createHmac(data) {
   return crypto.createHmac("sha256", SECRET_KEY).update(data).digest("hex");
 }
 
-// Generate secure URL
-// async function generateUrl(req) {
-//   const { name, email, contact, userId, domainName,ctclId,plan,brokerId , amount} = req.body;
 
-//   if (!name || !email || !contact || !userId || !domainName || !ctclId  ||  !plan || !brokerId || !amount) {
-//     throw new AppError("All fields are required", 400);
-//   }
-
-//   const payload = { name, email, contact, userId, domainName ,ctclId,plan,brokerId, amount};
-//   const encryptedPayload = encodeURIComponent(encryptData(payload));
-//   const signature = createHmac(encryptedPayload);
-
-//   const frontendUrl= ServerConfig.FRONTEND_URL;
-//   return `${frontendUrl}?data=${encryptedPayload}&sig=${signature}`;
-
-
-
-
-// }
 async function generateUrl(req) {
-  const { name, email, contact, userId, domainName, ctclId, plan, brokerId, amount } = req.body;
+  const { name, email, contact, userId, domainName, ctclId, plan, brokerId, amount, id } = req.body;
 
-  if (!name || !email || !contact || !userId || !domainName || !ctclId || !plan || !brokerId || !amount) {
+  if (!name || !email || !contact || !userId || !domainName || !ctclId || !plan || !brokerId || !amount || !id) {
     throw new AppError("All fields are required", 400);
   }
 
-  const payload = { name, email, contact, userId, domainName, ctclId, plan, brokerId, amount };
+  const payload = { name, email, contact, userId, domainName, ctclId, plan, brokerId, amount,id  };
 
   // Step 1: Encrypt payload
   const encryptedPayload = encryptData(payload);
@@ -99,25 +81,6 @@ async function generateUrl(req) {
 }
 
 
-// Decode and verify URL data
-//  async function decodeUrl(data, sig) {
-//  logger.info("decodeUrl service invoked", { hasData: Boolean(data), hasSig: Boolean(sig) });
-
-//     if (!data || !sig) {
-//       logger.warn("Missing data or signature in decodeUrl", { dataPresent: Boolean(data), sigPresent: Boolean(sig) });
-//       throw new AppError("Missing data or signature", StatusCodes.BAD_REQUEST);
-//     }
-//     // const expectedSig = createHmac(data); 
-//   if (expectedSig !== sig) {
-//       logger.warn("Invalid signature detected in decodeUrl", { dataSnippet: data.slice(0, 50) });
-//       throw new AppError("Invalid signature! Data may have been tampered with.", StatusCodes.UNAUTHORIZED);
-//     }
-//     const decryptedData = decryptData(decodeURIComponent(data));
-//      console.log(decryptData(decodeURIComponent(data)),'popopopopopopo')
-//   logger.info("decodeUrl successfully decrypted data", {  decryptedDataSnippet: JSON.stringify(decryptedData).slice(0, 100) });
-
-//   return decryptedData;
-// }
 
 async function decodeUrl(data, sig) {
   logger.info("decodeUrl service invoked", { hasData: Boolean(data), hasSig: Boolean(sig) });

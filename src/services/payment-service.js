@@ -448,11 +448,20 @@ async function paymentWebhook(req, res) {
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   try {
     const webhookSignature = req.get("X-Razorpay-Signature");
+      logger.info("Webhook invoked", { ip, hasSignature: Boolean(webhookSignature) });
 
     if (!webhookSignature) {
-      ErrorResponse.message = "Signature missing";
-      return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
-    }
+        logger.warn("Webhook signature missing", { ip });
+      ErrorResponse.message="Signature missing"
+        return res
+                .status(StatusCodes.BAD_REQUEST)
+                .json(ErrorResponse)
+      }
+      console.log("******************************* Webhook Data *******************************");
+      console.log(JSON.stringify(req.body, null, 2));
+      logger.info("webhook  data ",JSON.stringify(req.body ));
+      console.log("***************************************************************************");
+
 
     const rawBody = JSON.stringify(req.body);
     const isWebhookValid = validateWebhookSignature(
@@ -461,56 +470,158 @@ async function paymentWebhook(req, res) {
       RazorConfig.RAZORPAY_WEBHOOK_SECRET
     );
 
-    if (!isWebhookValid) {
-      return res.status(400).json({ success: false, error: "Invalid signature" });
-    }
+   if (!isWebhookValid) {
+        logger.warn("Invalid webhook signature");
+        return res.status(400).json({ success: false, error: "Invalid signature" });
+      }
+     
 
     const payload = req.body;
     const paymentDetails = payload?.payload?.payment?.entity;
 
-      console.log("******************************* Webhook Data *******************************");
-      console.log(JSON.stringify(req.body, null, 2));
-      logger.info("webhook  data ",JSON.stringify(req.body ));
-      console.log("***************************************************************************");
+  
+     if (!paymentDetails) {
+        logger.warn("No payment details found in webhook payload", { ip });
+        return res.status(400).json({ success: false, error: "No payment details found" });
+      }
 
-    if (!paymentDetails) {
-      return res.status(400).json({ success: false, error: "No payment details found" });
-    }
+        logger.info("Processing webhook for order", {
+        ip,
+        event: payload.event,
+        orderId: paymentDetails.order_id,
+        paymentId: paymentDetails.id,
+        amount: paymentDetails.amount,
+        status: paymentDetails.status
+      });
 
-    const updates = {
-      payment_id: paymentDetails.id,
-      raw_payload: payload,
-      pg_webhook_received_at: new Date(),
-      payment_verified: "YES",
-      transaction_status: "PENDING",
-      status: paymentDetails.status || null,
-      ip_address: ip,
-      webhook_called: 1,
-      timestamp_webhook_called: new Date(),
-      is_plan_valid: false,
-    };
+      const updates = {
+         payment_id: paymentDetails.id,
+         raw_payload: payload,
+         pg_webhook_received_at: new Date(),
+         payment_verified: "YES",
+         transaction_status: "PENDING",
+         status: paymentDetails.status || null,
+         method: paymentDetails.method || null,
+        currency: paymentDetails.currency || null,
+        vpa: paymentDetails.vpa || paymentDetails?.upi?.vpa || null,
+        fee: (paymentDetails.fee || 0)/100,
+        tax: (paymentDetails.tax || 0)/100,
+        acquirer_data: paymentDetails.acquirer_data || {},
+        notes: paymentDetails.notes || {},
+        ip_address: ip,
+        webhook_called: 1,
+        timestamp_webhook_called: new Date(),
+        is_plan_valid: false,
+      };
 
-    switch (payload.event) {
-      case "payment.captured":
-      case "order.paid":
-        updates.transaction_status = "SUCCESS";
-        updates.payment_verified = "YES";
-        updates.is_plan_valid = true;
-        updates.plan_valid_till = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-        break;
-      case "payment.failed":
-        updates.transaction_status = "FAILED";
-        updates.payment_verified = "NO";
-        break;
-      case "payment.authorized":
-        updates.transaction_status = "PENDING";
-        break;
-    }
+
+       logger.info("Initial updates object created", {
+        orderId: paymentDetails.order_id,
+        initialStatus: updates.transaction_status,
+        initialPlanValid: updates.is_plan_valid
+      });
+
+      switch (payload.event) {
+          case "payment.captured":
+            logger.info("Processing payment.captured event", {
+              orderId: paymentDetails.order_id,
+              paymentId: paymentDetails.id,
+              amount: paymentDetails.amount
+            });
+            updates.transaction_status = "SUCCESS";
+            updates.payment_verified = "YES";
+            updates.is_plan_valid = true;
+            updates.plan_valid_till = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+            logger.info("Updated for payment.captured", {
+              orderId: paymentDetails.order_id,
+              newStatus: updates.transaction_status,
+              planValid: updates.is_plan_valid,
+              planValidTill: updates.plan_valid_till
+            });
+            break;
+    
+          case "order.paid":
+            logger.info("Processing order.paid event", {
+              orderId: paymentDetails.order_id,
+              paymentId: paymentDetails.id,
+              amount: paymentDetails.amount
+            });
+            updates.transaction_status = "SUCCESS";
+            updates.payment_verified = "YES";
+            updates.is_plan_valid = true;
+            updates.plan_valid_till = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+            logger.info("Updated for order.paid", {
+              orderId: paymentDetails.order_id,
+              newStatus: updates.transaction_status,
+              planValid: updates.is_plan_valid,
+              planValidTill: updates.plan_valid_till
+            });
+            break;
+    
+          case "payment.failed":
+            logger.info("Processing payment.failed event", {
+              orderId: paymentDetails.order_id,
+              paymentId: paymentDetails.id
+            });
+            updates.transaction_status = "FAILED";
+            updates.payment_verified = "NO";
+            logger.info("Updated for payment.failed", {
+              orderId: paymentDetails.order_id,
+              newStatus: updates.transaction_status
+            });
+            break;
+    
+          case "payment.authorized":
+            logger.info("Processing payment.authorized event", {
+              orderId: paymentDetails.order_id,
+              paymentId: paymentDetails.id
+            });
+            updates.transaction_status = "PENDING";
+            logger.info("Updated for payment.authorized", {
+              orderId: paymentDetails.order_id,
+              newStatus: updates.transaction_status
+            });
+            break;
+    
+          default:
+            logger.info("Unhandled Razorpay event type", { 
+              event: payload.event,
+              orderId: paymentDetails.order_id 
+            });
+            break;
+        }
+        logger.info("About to update payment in database", {
+          orderId: paymentDetails.order_id,
+          finalUpdates: {
+            transaction_status: updates.transaction_status,
+            payment_verified: updates.payment_verified,
+            is_plan_valid: updates.is_plan_valid,
+            plan_valid_till: updates.plan_valid_till ? updates.plan_valid_till.toISOString() : null
+          }
+        });
+   
+   
 
     const updatedPayment = await paymentRepository.updatePaymentByOrderId(
       paymentDetails.order_id,
       updates
     );
+
+    if (updatedPayment) {
+      logger.info("Webhook processed successfully - database updated", {
+        ip,
+        event: payload.event,
+        paymentId: paymentDetails.id,
+        orderId: paymentDetails.order_id,
+        amount: paymentDetails.amount,
+        status: updates.transaction_status,
+        planValid: updates.is_plan_valid,
+        planValidTill: updates.plan_valid_till
+      });
+    
+    }
+
+  
     res.status(200).json({ success: true });
     res.on("finish", async () => {
       try {

@@ -159,6 +159,11 @@ const schemas = {
       .messages({
         'string.empty': 'User ID is required'
       }),
+      id: Joi.string()
+      .required()
+      .messages({
+        'string.empty': 'ID is required'
+      }),
     domainName: Joi.string()
       .required()
       .messages({
