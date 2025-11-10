@@ -1,15 +1,15 @@
 
 const axios = require('axios');
 const crypto = require('crypto');
-const { logger } = require('../config');
+const { logger, WebhookConfig } = require('../config');
 const WebhookRepository = require('../repositories/webhook-repository');
 
 class WebhookService {
     constructor() {
         this.webhookRepository = new WebhookRepository();
-        this.WEBHOOK_URL = 'http://182.70.127.254:44346/api/webhook/payment-status';
-        this.WEBHOOK_SECRET = 'OMf1AZ8ULqqfr4RQlcq7';
-        this.DOMAIN = "bull8pay.com";
+        this.WEBHOOK_URL = WebhookConfig.WEBHOOK_URL;
+        this.WEBHOOK_SECRET = WebhookConfig.WEBHOOK_SECRET;
+        this.DOMAIN = WebhookConfig.WEBHOOK_DOMAIN;
     }
 
     // Calculate next retry time with exponential backoff

@@ -6,6 +6,7 @@ module.exports = {
     logger:require("./logger-config"),
     dbConfig:require('./db-config'),
     testDbConnection:require("./dbConnect"),
-    amountConfig:require("./amount-config")
+    amountConfig:require("./amount-config"),
+    WebhookConfig: require('./webhook-config')
    
 }
