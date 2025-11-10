@@ -35,11 +35,11 @@ if (response.success === false &&
        
         
        
-              SuccessResponse.data = response.order;
-             SuccessResponse.message = 'Payment created successfully';
-             logger.info('Payment created successfully', { ip, orderId: response.order.id });
+                SuccessResponse.data = response.order;
+              SuccessResponse.message = 'Payment created successfully';
+              logger.info('Payment created successfully', { ip, orderId: response.order.id });
 
-             return res.status(StatusCodes.OK).json(SuccessResponse);
+              return res.status(StatusCodes.OK).json(SuccessResponse);
 
      }catch(error){
       ErrorResponse.error = error.explanation || 'Something went wrong';

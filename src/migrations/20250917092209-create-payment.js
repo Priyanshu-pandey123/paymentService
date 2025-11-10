@@ -13,7 +13,7 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false
       },
-      paymentId: {
+      transaction_id: {
         type: Sequelize.STRING,
         allowNull: false
       },
