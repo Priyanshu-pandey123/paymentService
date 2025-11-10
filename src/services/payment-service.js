@@ -519,7 +519,7 @@ async function paymentWebhook(req, res) {
 
         // Check if a successful webhook has already been sent for this order
         const existingSuccessfulWebhook = await webhookRepository.findByOrderIdAndStatus(
-          updatedPayment.order_id, 
+          updatedPayment.uuid, 
           'SUCCESS'
         );
 
