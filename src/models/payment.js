@@ -25,7 +25,7 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      transaction_id: {
+      id: {
         type: DataTypes.STRING,
         allowNull: false,
       },

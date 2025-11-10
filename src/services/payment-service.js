@@ -146,7 +146,7 @@ if (amount > amountConfig.MAX_AMOUNT) {
           plan,
           ctclId,
           brokerId,
-          paymentId:id,
+          id:id,
           ip_address:ip
 
       }
