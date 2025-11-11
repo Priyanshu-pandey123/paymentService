@@ -453,8 +453,8 @@ async function paymentWebhook(req, res) {
         
         // Use updatedPayment instead of fetching fresh data
         console.log("******************************* Webhook Data *******************************");
-        console.log(JSON.stringify(payload, null, 2));
-        logger.info("payload   data ",JSON.stringify(payload));
+        console.log(JSON.stringify(updatedPayment, null, 2));
+        logger.info("payload   data ",JSON.stringify(updatedPayment));
         console.log("***************************************************************************");
   
   
