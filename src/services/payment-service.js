@@ -159,8 +159,28 @@ if (amount > amountConfig.MAX_AMOUNT) {
     amount,
     plan,
   });
+  // Fire-and-forget webhook (non-blocking)
+Promise.resolve()
+.then(() => sendPaymentStatusWebhook(payment))
+.then(() => {
+  logger.info("Payment creation webhook sent successfully", {
+    userId,
+    paymentUuid: payment.uuid,
+    orderId: order.id,
+  });
+})
+.catch((webhookError) => {
+  logger.error("Failed to send payment creation webhook", {
+    userId,
+    paymentUuid: payment.uuid,
+    orderId: order.id,
+    error: webhookError.message,
+  });
+});
+
 
     return { order, payment };
+
      
   } catch(error) {
     console.log(error)
@@ -488,7 +508,7 @@ async function cancelPayment(orderId) {
     // Send webhook notification to root server
     try {
       const webhookService = new WebhookService();
-      await webhookService.sendWebhook(response);
+      await webhookService.sendWebho-ok(response);
       logger.info("Webhook notification sent for cancelled payment", { orderId, paymentUuid: response.uuid });
     } catch (webhookError) {
       logger.error("Failed to send webhook notification for cancelled payment", { 
