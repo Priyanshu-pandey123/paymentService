@@ -514,7 +514,7 @@ async function cancelPayment(orderId) {
     // Send webhook notification to root server
     try {
       const webhookService = new WebhookService();
-      await webhookService.sendWebho-ok(response);
+      await webhookService.sendWebhook(response);
       logger.info("Webhook notification sent for cancelled payment", { orderId, paymentUuid: response.uuid });
     } catch (webhookError) {
       logger.error("Failed to send webhook notification for cancelled payment", { 

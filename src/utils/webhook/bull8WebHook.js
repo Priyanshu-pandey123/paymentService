@@ -68,7 +68,7 @@ async function sendPaymentStatusWebhook(paymentData) {
     });
   } catch (error) {
 
-    console.log(error, 'from the webhook')``
+    // console.log(error, 'from the webhook')
     logger.error("Failed to Send Payment Status Webhook", {
       error: error.message,
       status: error.response?.status,

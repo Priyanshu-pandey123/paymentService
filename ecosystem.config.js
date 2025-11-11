@@ -7,9 +7,9 @@ module.exports = {
         exec_mode: "cluster",
         watch: false,
         max_memory_restart: "14G",
-        env: {
-          NODE_ENV: "production",
-        }
+        // env: {
+        //   NODE_ENV: "production",
+        // }
       }
     ]
   };
