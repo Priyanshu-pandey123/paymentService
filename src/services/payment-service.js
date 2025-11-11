@@ -436,13 +436,13 @@ async function paymentWebhook(req, res) {
       try {
         const webhookService = new WebhookService();
         const webhookRepository = new WebhookRepository();
-
+  
         // Check if a successful webhook has already been sent for this order
         const existingSuccessfulWebhook = await webhookRepository.findByOrderIdAndStatus(
           updatedPayment.uuid, 
           'SUCCESS'
         );
-
+  
         if (existingSuccessfulWebhook) {
           logger.info("Webhook already successfully sent for this order, skipping", {
             orderId: updatedPayment.order_id,
@@ -450,10 +450,11 @@ async function paymentWebhook(req, res) {
           });
           return;
         }
-        const freshPaymentData = await paymentRepository.findByOrderId(paymentDetails.order_id);
-        const payload = webhookService.preparePayload(freshPaymentData || updatedPayment)
+        
+        // Use updatedPayment instead of fetching fresh data
+        const payload = webhookService.preparePayload(updatedPayment)
         const signature = webhookService.generateSignature(payload);
-
+  
         const log = await webhookRepository.create({
           payment_uuid: updatedPayment.uuid,
           webhook_url: webhookService.WEBHOOK_URL,
@@ -464,7 +465,7 @@ async function paymentWebhook(req, res) {
           max_attempts: 5,
           next_retry_at: new Date()
         });
-
+  
         await webhookService.attemptWebhook(log.id, payload, signature);
       } catch (err) {
         logger.error("Failed to queue + send webhook", { error: err.message });
