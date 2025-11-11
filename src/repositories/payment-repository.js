@@ -94,6 +94,7 @@ class PaymentRepository extends CrudRepository {
             }
             
             await payment.update(updates);
+            await payment.reload();
             
             logger.info('Repository: Payment updated successfully', { 
                 orderId,
