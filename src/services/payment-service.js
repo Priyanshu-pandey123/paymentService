@@ -452,8 +452,14 @@ async function paymentWebhook(req, res) {
         }
         
         // Use updatedPayment instead of fetching fresh data
-        console.log(payload,'from the webhook')
+        console.log("******************************* Webhook Data *******************************");
+        console.log(JSON.stringify(payload, null, 2));
+        logger.info("payload   data ",JSON.stringify(payload));
+        console.log("***************************************************************************");
+  
+  
         const payload = webhookService.preparePayload(updatedPayment)
+        console.log(payload,'from the webhook')
         const signature = webhookService.generateSignature(payload);
   
         const log = await webhookRepository.create({
