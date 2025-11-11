@@ -72,6 +72,8 @@ class WebhookService {
 
     // Prepare webhook payload
     preparePayload(paymentData) {
+        console.log(paymentDatax);
+        logger.info(paymentData)
         return {
             Uuid: paymentData.uuid,
             Id:paymentData.id,

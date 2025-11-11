@@ -452,6 +452,7 @@ async function paymentWebhook(req, res) {
         }
         
         // Use updatedPayment instead of fetching fresh data
+        console.log(payload,'from the webhook')
         const payload = webhookService.preparePayload(updatedPayment)
         const signature = webhookService.generateSignature(payload);
   
@@ -476,6 +477,9 @@ async function paymentWebhook(req, res) {
     return res.status(500).json({ success: false, error: "Server error" });
   }
 }
+
+
+
 async function cancelPayment(orderId) {
   try {
  
