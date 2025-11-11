@@ -1,13 +1,14 @@
 const crypto = require("crypto");
 const axios = require("axios");
-const { logger } = require("../../config");
+const { logger, WebhookConfig } = require("../../config");
 
 async function sendPaymentStatusWebhook(paymentData) {
   try {
-    const WEBHOOK_URL = 'http://182.70.127.254:44346/api/webhook/payment-status'; 
-    const WEBHOOK_SECRET = 'OMf1AZ8ULqqfr4RQlcq7';
+    const WEBHOOK_URL = WebhookConfig.WEBHOOK_URL; 
+    const WEBHOOK_SECRET = WebhookConfig.WEBHOOK_SECRET;
+    const DOMAIN = WebhookConfig.WEBHOOK_DOMAIN;
     if (!WEBHOOK_URL) {
-      logger.error("PAYMENT_STATUS_WEBHOOK_URL environment variable is not set");
+      logger.error("PAYMENT_STATUS_WEBHOOK_URL environment variable is not s˘et");
       return;
     }
     
@@ -15,7 +16,7 @@ async function sendPaymentStatusWebhook(paymentData) {
       logger.error("PAYMENT_STATUS_WEBHOOK_SECRET environment variable is not set");
       return;
     }
-          const DOMAIN = "bull8pay.com";
+          
           const transformedData = {
             Uuid: paymentData.Uuid || paymentData.uuid || null,
             Id: paymentData.Id || paymentData.id || null,
@@ -61,7 +62,7 @@ async function sendPaymentStatusWebhook(paymentData) {
       timeout: 10000 
     });
 
-
+  console.log(response ,'*(*(*(*(*(*(*(*(*(*(*(*(*(*(')
     logger.info("Payment Status Webhook Sent Successfully", {
       status: response.status,
       statusText: response.statusText,
