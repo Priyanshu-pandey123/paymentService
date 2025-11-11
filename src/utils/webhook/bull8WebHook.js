@@ -62,7 +62,6 @@ async function sendPaymentStatusWebhook(paymentData) {
       timeout: 10000 
     });
 
-  console.log(response ,'*(*(*(*(*(*(*(*(*(*(*(*(*(*(')
     logger.info("Payment Status Webhook Sent Successfully", {
       status: response.status,
       statusText: response.statusText,
