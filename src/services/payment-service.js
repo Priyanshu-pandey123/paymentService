@@ -484,6 +484,21 @@ async function cancelPayment(orderId) {
      }
     const response = await paymentRepository.updatePaymentByOrderId(orderId,updates)
         logger.info("Payment cancelled successfully in service", { orderId, updatedRecord: response });
+    
+    // Send webhook notification to root server
+    try {
+      const webhookService = new WebhookService();
+      await webhookService.sendWebhook(response);
+      logger.info("Webhook notification sent for cancelled payment", { orderId, paymentUuid: response.uuid });
+    } catch (webhookError) {
+      logger.error("Failed to send webhook notification for cancelled payment", { 
+        orderId, 
+        paymentUuid: response.uuid, 
+        error: webhookError.message 
+      });
+      // Don't fail the cancellation if webhook fails
+    }
+    
     return response;
  
   } catch(error) {
