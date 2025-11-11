@@ -63,7 +63,7 @@ const schemas = {
         .messages({
           'string.empty': 'Broker ID is required'
         }),
-      amount: Joi.number()
+      amount: Joi.string()
         .min(1)
         .required()
         .positive()
