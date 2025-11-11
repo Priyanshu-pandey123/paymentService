@@ -66,11 +66,7 @@ const schemas = {
         amount: Joi.string()
         .pattern(/^\d+(\.\d+)?$/)
         .required()
-        .messages({
-          'string.pattern.base': 'Amount must be a valid number string (e.g., "100" or "100.50")',
-          'string.empty': 'Amount is required',
-          'any.required': 'Amount is required'
-        }),
+      
     }).required().messages({
       'any.required': 'User data is required'
     })
