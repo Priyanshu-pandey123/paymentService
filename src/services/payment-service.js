@@ -32,17 +32,22 @@ async function createPayment(data,ip) {
     logger.error("Invalid plan selected", { plan });
     throw new AppError("Invalid plan selected", StatusCodes.BAD_REQUEST);
   }
+  const numericAmount = parseFloat(amount);
 
-if (amount < amountConfig.MIN_AMOUNT) {
-  logger.error("Payment amount too low", { amount, minAllowed: amountConfig.MIN_AMOUNT });
-  throw new AppError(`Minimum payment amount is ₹${amountConfig.MIN_AMOUNT}`, StatusCodes.BAD_REQUEST);
-}
-
-if (amount > amountConfig.MAX_AMOUNT) {
-  logger.error("Payment amount too high", { amount, maxAllowed: amountConfig.MAX_AMOUNT });
-  throw new AppError(`Maximum payment amount is ₹${amountConfig.MAX_AMOUNT}`, StatusCodes.BAD_REQUEST);
-}
-
+  if (isNaN(numericAmount)) {
+    logger.error("Invalid amount format", { amount });
+    throw new AppError("Amount must be a valid number", StatusCodes.BAD_REQUEST);
+  }
+  
+  if (numericAmount < amountConfig.MIN_AMOUNT) {
+    logger.error("Payment amount too low", { amount: numericAmount, minAllowed: amountConfig.MIN_AMOUNT });
+    throw new AppError(`Minimum payment amount is ₹${amountConfig.MIN_AMOUNT}`, StatusCodes.BAD_REQUEST);
+  }
+  
+  if (numericAmount > amountConfig.MAX_AMOUNT) {
+    logger.error("Payment amount too high", { amount: numericAmount, maxAllowed: amountConfig.MAX_AMOUNT });
+    throw new AppError(`Maximum payment amount is ₹${amountConfig.MAX_AMOUNT}`, StatusCodes.BAD_REQUEST);
+  }
 
 
   // Check if user already has a successful payment

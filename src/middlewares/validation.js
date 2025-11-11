@@ -64,9 +64,13 @@ const schemas = {
           'string.empty': 'Broker ID is required'
         }),
         amount: Joi.string()
-        .pattern(/^\d+(\.\d+)?$/)
+        .pattern(/^(10|[1-9])$/)
         .required()
-      
+        .messages({
+          'string.pattern.base': 'Amount must be a number between 1 and 10',
+          'string.empty': 'Amount is required',
+          'any.required': 'Amount is required'
+        }),
     }).required().messages({
       'any.required': 'User data is required'
     })
