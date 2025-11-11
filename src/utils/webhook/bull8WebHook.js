@@ -28,7 +28,7 @@ async function sendPaymentStatusWebhook(paymentData) {
             Name: paymentData.Name || paymentData.name,
             Email: paymentData.Email || paymentData.email,
             Contact: paymentData.Contact || paymentData.contact,
-            Amount:  toString(paymentData.Amount) || toString(paymentData.amount),
+            Amount: (paymentData.Amount ?? paymentData.amount)?.toString() ?? null,
             Currency: paymentData.Currency || paymentData.currency || 'INR',
             Description: paymentData.Description || paymentData.description,
             PaymentGateway: paymentData.PaymentGateway || paymentData.payment_gateway || 'Razorpay',
