@@ -450,12 +450,12 @@ async function paymentWebhook(req, res) {
           });
           return;
         }
-
-        const payload = webhookService.preparePayload(updatedPayment);
+        const freshPaymentData = await paymentRepository.findByOrderId(paymentDetails.order_id);
+        const payload = webhookService.preparePayload(freshPaymentData || updatedPayment)
         const signature = webhookService.generateSignature(payload);
 
         const log = await webhookRepository.create({
-          payment_uuid: updatedPayment.uuid,  // Changed from payment_order_id: updatedPayment.order_id
+          payment_uuid: updatedPayment.uuid,
           webhook_url: webhookService.WEBHOOK_URL,
           payload,
           signature,

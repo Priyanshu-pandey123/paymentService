@@ -15,7 +15,7 @@ class WebhookService {
     // Calculate next retry time with exponential backoff
     calculateNextRetry(attemptCount) {
         // Exponential backoff: 1min, 5min, 15min, 45min, 2hr, 6hr, 18hr, 24hr max
-        const delays = [ 5, 15, 45, 120, 360, 1080, 1440]; // minutes
+        const delays = [1, 5, 15, 45, 120, 360, 1080, 1440]; // minutes
         const delayMinutes = delays[Math.min(attemptCount, delays.length - 1)] || 1440;
         return new Date(Date.now() + delayMinutes * 60 * 1000);
     }
