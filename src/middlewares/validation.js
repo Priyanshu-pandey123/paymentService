@@ -189,16 +189,14 @@ const schemas = {
       .messages({
         'string.empty': 'Broker ID is required'
       }),
-        amount: Joi.number()
-        .min(1)
-        .required()
-        .positive()
-        .messages({
-          'number.base': 'Amount must be a valid number',
-          'number.min': 'Amount must be at least 1',
-          'number.positive': 'Amount must be a positive number',
-          'any.required': 'Amount is required'
-        }),
+      amount: Joi.string()
+      .pattern(/^(10|[1-9])$/)
+      .required()
+      .messages({
+        'string.pattern.base': 'Amount must be a number between 1 and 10',
+        'string.empty': 'Amount is required',
+        'any.required': 'Amount is required'
+      }),
   }),
 
   decodeUrl: Joi.object({

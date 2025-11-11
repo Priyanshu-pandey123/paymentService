@@ -46,17 +46,17 @@ const HttpStatusCode = require('http-status-codes');
         }
        
 
-             if (amount > amountConfig.MAX_AMOUNT) {
-           logger.error("Amount exceeds business limit", { amount, maxAmount: amountConfig.MAX_AMOUNT, ip });
-           ErrorResponse.message=`Amount exceeds the maximum limit of ₹${amountConfig.MAX_AMOUNT}`;
-           return res.status(HttpStatusCode.BAD_REQUEST).json(ErrorResponse)
-          }
+      //        if (amount > amountConfig.MAX_AMOUNT) {
+      //      logger.error("Amount exceeds business limit", { amount, maxAmount: amountConfig.MAX_AMOUNT, ip });
+      //      ErrorResponse.message=`Amount exceeds the maximum limit of ₹${amountConfig.MAX_AMOUNT}`;
+      //      return res.status(HttpStatusCode.BAD_REQUEST).json(ErrorResponse)
+      //     }
   
-      if (amount <= amountConfig.MIN_AMOUNT) {
-           logger.error("Amount below business minimum", { amount, minAmount: amountConfig.MIN_AMOUNT, ip });
-           ErrorResponse.message=`Amount is below the minimum limit of ₹${amountConfig.MIN_AMOUNT}`;
-           return res.status(HttpStatusCode.BAD_REQUEST).json(ErrorResponse)
-      }
+      // if (amount <= amountConfig.MIN_AMOUNT) {
+      //      logger.error("Amount below business minimum", { amount, minAmount: amountConfig.MIN_AMOUNT, ip });
+      //      ErrorResponse.message=`Amount is below the minimum limit of ₹${amountConfig.MIN_AMOUNT}`;
+      //      return res.status(HttpStatusCode.BAD_REQUEST).json(ErrorResponse)
+      // }
 
 
         const response = await UrlService.generateUrl(req);
