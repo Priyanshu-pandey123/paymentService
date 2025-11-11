@@ -72,7 +72,7 @@ class WebhookService {
 
     // Prepare webhook payload
     preparePayload(paymentData) {
-        console.log(paymentDatax);
+        console.log(paymentData);
         logger.info('payment data',paymentData)
         return {
             Uuid: paymentData.uuid,
@@ -174,7 +174,7 @@ class WebhookService {
             return { success: true, response: response.data };
 
         } catch (error) {
-            
+
             logger.error("Webhook send failed", {
                 webhookLogId,
                 webhookUrl: this.WEBHOOK_URL,
