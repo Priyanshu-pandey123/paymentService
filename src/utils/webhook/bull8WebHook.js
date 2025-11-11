@@ -8,7 +8,7 @@ async function sendPaymentStatusWebhook(paymentData) {
     const WEBHOOK_SECRET = WebhookConfig.WEBHOOK_SECRET;
     const DOMAIN = WebhookConfig.WEBHOOK_DOMAIN;
     if (!WEBHOOK_URL) {
-      logger.error("PAYMENT_STATUS_WEBHOOK_URL environment variable is not s˘et");
+      logger.error("PAYMENT_STATUS_WEBHOOK_URL environment variable is not set");
       return;
     }
     
@@ -17,7 +17,7 @@ async function sendPaymentStatusWebhook(paymentData) {
       return;
     }
           
-          const transformedData = {
+    const transformedData = {
             Uuid: paymentData.Uuid || paymentData.uuid || null,
             Id: paymentData.Id || paymentData.id || null,
             UserId: paymentData.UserId || paymentData.userId,
@@ -28,7 +28,7 @@ async function sendPaymentStatusWebhook(paymentData) {
             Name: paymentData.Name || paymentData.name,
             Email: paymentData.Email || paymentData.email,
             Contact: paymentData.Contact || paymentData.contact,
-            Amount: paymentData.Amount || paymentData.amount,
+            Amount:  toString(paymentData.Amount) || toString(paymentData.amount),
             Currency: paymentData.Currency || paymentData.currency || 'INR',
             Description: paymentData.Description || paymentData.description,
             PaymentGateway: paymentData.PaymentGateway || paymentData.payment_gateway || 'Razorpay',
@@ -36,7 +36,7 @@ async function sendPaymentStatusWebhook(paymentData) {
             TransactionStatus: "PENDING",
             CreatedAt: paymentData.CreatedAt || paymentData.createdAt || new Date(),
             UpdatedAt: paymentData.UpdatedAt || paymentData.updatedAt || new Date()
-          };
+    };
 
     // Create signature
     const payload = JSON.stringify(transformedData);
@@ -68,7 +68,7 @@ async function sendPaymentStatusWebhook(paymentData) {
     });
   } catch (error) {
 
-    console.log(error, 'from the webhook')
+    console.log(error, 'from the webhook')``
     logger.error("Failed to Send Payment Status Webhook", {
       error: error.message,
       status: error.response?.status,
