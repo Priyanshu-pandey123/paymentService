@@ -273,6 +273,32 @@ class WebhookRepository {
             throw error;
         }
     }
+
+    async upsert(webhookData) {
+        try {
+            // Sequelize upsert handles unique constraint conflicts automatically
+            // It will INSERT if no record exists, or UPDATE if record exists with same payment_uuid
+            const [instance, created] = await WebhookLog.upsert(webhookData, {
+                returning: true // Return the instance
+            });
+            
+            logger.info('Webhook log upserted', { 
+                id: instance.id, 
+                paymentUuid: instance.payment_uuid,
+                created: created,
+                operation: created ? 'INSERT' : 'UPDATE'
+            });
+            
+            return [instance, created];
+        } catch (error) {
+            logger.error('Failed to upsert webhook log', { 
+                paymentUuid: webhookData.payment_uuid, 
+                error: error.message,
+                stack: error.stack
+            });
+            throw error;
+        }
+    }
 }
 
 module.exports = WebhookRepository;
