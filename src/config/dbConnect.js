@@ -31,6 +31,17 @@ const sequelize = new Sequelize(DB_NAME, DB_USERNAME, DB_PASSWORD, {
     timestamps: true,
     underscored: true, // Use snake_case column names
     freezeTableName: true, // Prevent Sequelize from pluralizing table names
+    // Add getter methods to convert timestamps to IST
+    getterMethods: {
+      createdAt() {
+        const TimezoneHelper = require('../utils/helpers/timezone-helpers');
+        return TimezoneHelper.formatIST(this.getDataValue('createdAt'), 'YYYY-MM-DDTHH:mm:ss.SSSZ');
+      },
+      updatedAt() {
+        const TimezoneHelper = require('../utils/helpers/timezone-helpers');
+        return TimezoneHelper.formatIST(this.getDataValue('updatedAt'), 'YYYY-MM-DDTHH:mm:ss.SSSZ');
+      }
+    }
   },
   
   // Additional security settings
@@ -42,6 +53,13 @@ const sequelize = new Sequelize(DB_NAME, DB_USERNAME, DB_PASSWORD, {
     // Prevent timezone-based attacks
     useUTC: false,
     timezone: DB_TIMEZONE,
+    // Force timezone conversion
+    typeCast: function (field, next) {
+      if (field.type === 'DATETIME' || field.type === 'TIMESTAMP') {
+        return field.string();
+      }
+      return next();
+    },
   }
 });
 

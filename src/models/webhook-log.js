@@ -1,5 +1,6 @@
 'use strict';
 const { Model, DataTypes } = require('sequelize');
+const TimezoneHelper = require('../utils/helpers/timezone-helpers');
 
 module.exports = (sequelize) => {
   class WebhookLog extends Model {
@@ -9,6 +10,35 @@ module.exports = (sequelize) => {
         targetKey: 'uuid',
         as: 'payment'
       });
+    }
+
+    // Getter methods for IST timestamps
+    get createdAtIST() {
+      return TimezoneHelper.formatIST(this.createdAt, 'YYYY-MM-DDTHH:mm:ss.SSSZ');
+    }
+
+    get updatedAtIST() {
+      return TimezoneHelper.formatIST(this.updatedAt, 'YYYY-MM-DDTHH:mm:ss.SSSZ');
+    }
+
+    // Override toJSON to return IST timestamps
+    toJSON() {
+      const values = { ...this.get() };
+      
+      // Convert timestamp fields to IST format
+      const timestampFields = ['last_attempt_at', 'next_retry_at'];
+      
+      timestampFields.forEach(field => {
+        if (values[field]) {
+          values[field] = TimezoneHelper.formatIST(values[field], 'YYYY-MM-DDTHH:mm:ss.SSSZ');
+        }
+      });
+
+      // Ensure createdAt and updatedAt are in IST
+      values.createdAt = this.createdAtIST;
+      values.updatedAt = this.updatedAtIST;
+      
+      return values;
     }
   }
 
@@ -75,6 +105,23 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING(200),
         allowNull: true,
       },
+      
+      // Override createdAt and updatedAt getters
+      createdAt: {
+        type: DataTypes.DATE,
+        get() {
+          const rawValue = this.getDataValue('createdAt');
+          return rawValue ? TimezoneHelper.formatIST(rawValue, 'YYYY-MM-DDTHH:mm:ss.SSSZ') : null;
+        }
+      },
+      updatedAt: {
+        type: DataTypes.DATE,
+        get() {
+          const rawValue = this.getDataValue('updatedAt');
+          return rawValue ? TimezoneHelper.formatIST(rawValue, 'YYYY-MM-DDTHH:mm:ss.SSSZ') : null;
+        }
+      },
+      
     },
     {
       sequelize,

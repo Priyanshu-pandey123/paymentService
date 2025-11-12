@@ -1,5 +1,6 @@
 const { WebhookLog } = require('../models');
 const { logger } = require('../config');
+const TimezoneHelper = require('../utils/helpers/timezone-helpers');
 
 class WebhookRepository {
     async create(webhookData) {
@@ -31,7 +32,7 @@ class WebhookRepository {
                         [require('sequelize').Op.lt]: require('sequelize').col('max_attempts')
                     },
                     next_retry_at: {
-                        [require('sequelize').Op.lte]: new Date()
+                        [require('sequelize').Op.lte]: TimezoneHelper.now().toDate()
                     }
                 },
                 order: [['next_retry_at', 'ASC']]
@@ -46,7 +47,7 @@ class WebhookRepository {
             const updateData = {
                 status,
                 attempt_count: attemptCount,
-                last_attempt_at: new Date(),
+                last_attempt_at: TimezoneHelper.now().toDate(),
                 next_retry_at: nextRetryAt,
             };
 
@@ -74,7 +75,7 @@ class WebhookRepository {
                 status: 'SUCCESS',
                 response_status: responseData.status,
                 response_data: responseData.data,
-                last_attempt_at: new Date()
+                last_attempt_at: TimezoneHelper.now().toDate()
             }, { where: { id } });
             logger.info('Webhook marked as success', { id });
             return affectedRows > 0;
@@ -89,7 +90,7 @@ class WebhookRepository {
             const [affectedRows] = await WebhookLog.update({
                 status: 'FAILED',
                 error_message: errorMessage,
-                last_attempt_at: new Date()
+                last_attempt_at: TimezoneHelper.now().toDate()
             }, { where: { id } });
             logger.info('Webhook marked as failed', { id, errorMessage });
             return affectedRows > 0;

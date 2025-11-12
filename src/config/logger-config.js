@@ -9,7 +9,25 @@ const logger = createLogger({
     format.printf(({ timestamp, level, message, ...meta }) => {
       let log = `[${timestamp}] [${level}]: ${message}`;
       if (Object.keys(meta).length) {
-        log += ` | meta: ${JSON.stringify(meta)}`;
+        // Safe JSON stringify that handles circular references
+        const safeStringify = (obj) => {
+          try {
+            return JSON.stringify(obj);
+          } catch (error) {
+            // If circular reference error, create a safe version
+            const safeObj = {};
+            for (const key in obj) {
+              try {
+                JSON.stringify(obj[key]); // Test if serializable
+                safeObj[key] = obj[key];
+              } catch {
+                safeObj[key] = '[Circular Reference]';
+              }
+            }
+            return JSON.stringify(safeObj);
+          }
+        };
+        log += ` | meta: ${safeStringify(meta)}`;
       }
       return log;
     })

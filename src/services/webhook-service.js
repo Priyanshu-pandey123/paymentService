@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const { logger, WebhookConfig } = require('../config');
 const WebhookRepository = require('../repositories/webhook-repository');
 const { time } = require('console');
+const TimezoneHelper = require('../utils/helpers/timezone-helpers');
 
 class WebhookService {
     constructor() {
@@ -32,7 +33,7 @@ class WebhookService {
         // Exponential backoff: 1min, 5min, 15min, 45min, 2hr, 6hr, 18hr, 24hr max
         const delays = [1, 5, 15, 45, 120, 360, 1080, 1440]; // minutes
         const delayMinutes = delays[Math.min(attemptCount, delays.length - 1)] || 1440;
-        return new Date(Date.now() + delayMinutes * 60 * 1000);
+        return TimezoneHelper.addIST(delayMinutes, 'minutes').toDate();
     }
 
     // Send webhook synchronously (for immediate sending)

@@ -3,6 +3,7 @@ const axios = require("axios");
 const { logger, WebhookConfig } = require("../../config");
 const { resolve } = require("path");
 const { response } = require("express");
+const { planData } = require("../plan");
 
 async function sendPaymentStatusWebhook(paymentData) {
   let WEBHOOK_URL, WEBHOOK_SECRET, DOMAIN; // Declare variables outside try block
@@ -39,7 +40,7 @@ async function sendPaymentStatusWebhook(paymentData) {
             PaymentGateway: paymentData.PaymentGateway || paymentData.payment_gateway || 'Razorpay',
             IpAddress: paymentData.IpAddress || paymentData.ip_address || paymentData.ip,
             TransactionStatus: "PENDING",
-            Plan:paymentData.pla || "",
+            Plan:paymentData.plan,
             CreatedAt: paymentData.CreatedAt || paymentData.createdAt || new Date(),
             UpdatedAt: paymentData.UpdatedAt || paymentData.updatedAt || new Date()
     };
