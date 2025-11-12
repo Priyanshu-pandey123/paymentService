@@ -3,6 +3,8 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
+    // In your migration, you can set default timezone for MySQL if needed
+    await queryInterface.sequelize.query("SET time_zone = '+05:30';");
     await queryInterface.createTable('webhook_logs', {
       id: {
         type: Sequelize.INTEGER,

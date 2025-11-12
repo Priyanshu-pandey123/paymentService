@@ -1,5 +1,6 @@
 'use strict';
 const { Model, DataTypes } = require('sequelize');
+const TimezoneHelper = require('../utils/helpers/timezone-helpers');
 
 module.exports = (sequelize) => {
   class Payment extends Model {
@@ -9,6 +10,38 @@ module.exports = (sequelize) => {
         sourceKey: 'uuid',
         as: 'webhookLog'
       });
+    }
+
+    // Getter methods for IST timestamps
+    get createdAtIST() {
+      return TimezoneHelper.formatIST(this.createdAt, 'YYYY-MM-DDTHH:mm:ss.SSSZ');
+    }
+
+    get updatedAtIST() {
+      return TimezoneHelper.formatIST(this.updatedAt, 'YYYY-MM-DDTHH:mm:ss.SSSZ');
+    }
+
+    // Override toJSON to return IST timestamps
+    toJSON() {
+      const values = { ...this.get() };
+      
+      // Convert timestamp fields to IST format
+      const timestampFields = [
+        'payment_attempted_at', 'pg_webhook_received_at', 'logged_at', 
+        'timestamp_for_redirected_to_broker', 'timestamp_webhook_called', 'plan_valid_till'
+      ];
+      
+      timestampFields.forEach(field => {
+        if (values[field]) {
+          values[field] = TimezoneHelper.formatIST(values[field], 'YYYY-MM-DDTHH:mm:ss.SSSZ');
+        }
+      });
+
+      // Ensure createdAt and updatedAt are in IST
+      values.createdAt = this.createdAtIST;
+      values.updatedAt = this.updatedAtIST;
+      
+      return values;
     }
   }
 
