@@ -12,6 +12,14 @@ class WebhookService {
         this.WEBHOOK_SECRET = WebhookConfig.WEBHOOK_SECRET;
         this.DOMAIN = WebhookConfig.WEBHOOK_DOMAIN;
         
+        // Validate required environment variables
+        if (!this.WEBHOOK_URL) {
+            throw new Error('WEBHOOK_URL environment variable is not configured');
+        }
+        if (!this.WEBHOOK_SECRET) {
+            throw new Error('WEBHOOK_SECRET environment variable is not configured');
+        }
+        
         logger.debug("WebhookService initialized", {
             webhookUrl: this.WEBHOOK_URL,
             domain: this.DOMAIN,
@@ -125,115 +133,228 @@ class WebhookService {
     }
 
     // Attempt to send webhook
-    async attemptWebhook(webhookLogId, payload, signature) {
-        try {
-            logger.info("Attempting webhook send", { 
-                webhookLogId,
-                webhookUrl: this.WEBHOOK_URL,
-                payloadSize: JSON.stringify(payload).length
-            });
+    // async attemptWebhook(webhookLogId, payload, signature) {
+    //     try {
+    //         logger.info("Attempting webhook send", { 
+    //             webhookLogId,
+    //             webhookUrl: this.WEBHOOK_URL,
+    //             payloadSize: JSON.stringify(payload).length
+    //         });
 
-            const headers = {
-                "Content-Type": "application/json",
-                "X-Domain": this.DOMAIN,
-                "X-Payment-Signature": signature,
-            };
+    //         const headers = {
+    //             "Content-Type": "application/json",
+    //             "X-Domain": this.DOMAIN,
+    //             "X-Payment-Signature": signature,
+    //         };
 
-            logger.debug("Webhook request headers prepared", { 
-                headers: { ...headers, "X-Payment-Signature": "[REDACTED]" },
-                timeout: 10000
-            });
+    //         logger.debug("Webhook request headers prepared", { 
+    //             headers: { ...headers, "X-Payment-Signature": "[REDACTED]" },
+    //             timeout: 10000
+    //         });
 
-            const response = await axios.post(this.WEBHOOK_URL, payload, { 
-                headers,
-                timeout: 10000 // 10 second timeout
-            });
+    //         const response = await axios.post(this.WEBHOOK_URL, payload, { 
+    //             headers,
+    //             timeout: 10000 // 10 second timeout
+    //         });
             
-            // Log successful response
-            logger.info("Webhook sent successfully", {
-                webhookLogId,
-                status: response.status,
-                statusText: response.statusText,
-                responseSize: JSON.stringify(response.data).length
-            });
+    //         // Log successful response
+    //         logger.info("Webhook sent successfully", {
+    //             webhookLogId,
+    //             status: response.status,
+    //             statusText: response.statusText,
+    //             responseSize: JSON.stringify(response.data).length
+    //         });
 
-            // Update database with success
-            try {
-                await this.webhookRepository.markAsSuccess(webhookLogId, {
-                    status: response.status,
-                    data: response.data
-                });
-                logger.debug("Webhook log marked as successful in database", { webhookLogId });
-            } catch (dbError) {
-                logger.error("Failed to update webhook log as successful", {
-                    webhookLogId,
-                    dbError: dbError.message
-                });
-            }
+    //         // Update database with success
+    //         try {
+    //             await this.webhookRepository.markAsSuccess(webhookLogId, {
+    //                 status: response.status,
+    //                 data: response.data
+    //             });
+    //             logger.debug("Webhook log marked as successful in database", { webhookLogId });
+    //         } catch (dbError) {
+    //             logger.error("Failed to update webhook log as successful", {
+    //                 webhookLogId,
+    //                 dbError: dbError.message
+    //             });
+    //         }
 
-            return { success: true, response: response.data };
+    //         return { success: true, response: response.data };
 
-        } catch (error) {
+    //     } catch (error) {
             
-            logger.error("Webhook send failed", {
-                webhookLogId,
-                webhookUrl: this.WEBHOOK_URL,
-                error: error.message,
-                status: error.response?.status,
-                statusText: error.response?.statusText,
-                responseData: error.response?.data,
-                isTimeout: error.code === 'ECONNABORTED',
-                stack: error.stack
-            });
+    //         logger.error("Webhook send failed", {
+    //             webhookLogId,
+    //             webhookUrl: this.WEBHOOK_URL,
+    //             error: error.message,
+    //             status: error.response?.status,
+    //             statusText: error.response?.statusText,
+    //             responseData: error.response?.data,
+    //             isTimeout: error.code === 'ECONNABORTED',
+    //             stack: error.stack
+    //         });
 
-            // Update attempt count and schedule next retry
+    //         // Update attempt count and schedule next retry
+    //         try {
+    //             const webhookLog = await this.webhookRepository.findById(webhookLogId);
+    //             logger.debug("Retrieved webhook log for retry calculation", {
+    //                 webhookLogId,
+    //                 currentAttempts: webhookLog.attempt_count,
+    //                 maxAttempts: webhookLog.max_attempts
+    //             });
+                
+    //             const newAttemptCount = webhookLog.attempt_count + 1;
+    //             const nextRetryAt = newAttemptCount >= webhookLog.max_attempts 
+    //                 ? null 
+    //                 : this.calculateNextRetry(newAttemptCount);
+
+    //             const newStatus = nextRetryAt ? 'RETRYING' : 'FAILED';
+
+    //             await this.webhookRepository.updateAttempt(
+    //                 webhookLogId,
+    //                 newStatus,
+    //                 newAttemptCount,
+    //                 nextRetryAt,
+    //                 error.response ? { status: error.response.status, data: error.response.data } : null,
+    //                 error.message
+    //             );
+
+    //             logger.info("Webhook retry scheduled", {
+    //                 webhookLogId,
+    //                 newAttemptCount,
+    //                 maxAttempts: webhookLog.max_attempts,
+    //                 nextRetryAt,
+    //                 status: newStatus
+    //             });
+
+    //         } catch (dbError) {
+    //             logger.error("Failed to update webhook retry information", {
+    //                 webhookLogId,
+    //                 dbError: dbError.message
+    //             });
+    //         }
+
+    //         return { 
+    //             success: false, 
+    //             error: error.message, 
+    //             willRetry: !!nextRetryAt,
+    //             nextRetryAt 
+    //         };
+    //     }
+    // }
+
+        // Attempt to send webhook
+        async attemptWebhook(webhookLogId, payload, signature) {
+            let nextRetryAt = null; // Declare outside try-catch block
+            
             try {
-                const webhookLog = await this.webhookRepository.findById(webhookLogId);
-                logger.debug("Retrieved webhook log for retry calculation", {
+                logger.info("Attempting webhook send", { 
                     webhookLogId,
-                    currentAttempts: webhookLog.attempt_count,
-                    maxAttempts: webhookLog.max_attempts
+                    webhookUrl: this.WEBHOOK_URL,
+                    payloadSize: JSON.stringify(payload).length
+                });
+    
+                const headers = {
+                    "Content-Type": "application/json",
+                    "X-Domain": this.DOMAIN,
+                    "X-Payment-Signature": signature,
+                };
+    
+                logger.debug("Webhook request headers prepared", { 
+                    headers: { ...headers, "X-Payment-Signature": "[REDACTED]" },
+                    timeout: 10000
+                });
+    
+                const response = await axios.post(this.WEBHOOK_URL, payload, { 
+                    headers,
+                    timeout: 10000 // 10 second timeout
                 });
                 
-                const newAttemptCount = webhookLog.attempt_count + 1;
-                const nextRetryAt = newAttemptCount >= webhookLog.max_attempts 
-                    ? null 
-                    : this.calculateNextRetry(newAttemptCount);
-
-                const newStatus = nextRetryAt ? 'RETRYING' : 'FAILED';
-
-                await this.webhookRepository.updateAttempt(
+                // Log successful response
+                logger.info("Webhook sent successfully", {
                     webhookLogId,
-                    newStatus,
-                    newAttemptCount,
-                    nextRetryAt,
-                    error.response ? { status: error.response.status, data: error.response.data } : null,
-                    error.message
-                );
-
-                logger.info("Webhook retry scheduled", {
-                    webhookLogId,
-                    newAttemptCount,
-                    maxAttempts: webhookLog.max_attempts,
-                    nextRetryAt,
-                    status: newStatus
+                    status: response.status,
+                    statusText: response.statusText,
+                    responseSize: JSON.stringify(response.data).length
                 });
-
-            } catch (dbError) {
-                logger.error("Failed to update webhook retry information", {
+    
+                // Update database with success
+                try {
+                    await this.webhookRepository.markAsSuccess(webhookLogId, {
+                        status: response.status,
+                        data: response.data
+                    });
+                    logger.debug("Webhook log marked as successful in database", { webhookLogId });
+                } catch (dbError) {
+                    logger.error("Failed to update webhook log as successful", {
+                        webhookLogId,
+                        dbError: dbError.message
+                    });
+                }
+    
+                return { success: true, response: response.data };
+    
+            } catch (error) {
+                
+                logger.error("Webhook send failed", {
                     webhookLogId,
-                    dbError: dbError.message
+                    webhookUrl: this.WEBHOOK_URL,
+                    error: error.message,
+                    status: error.response?.status,
+                    statusText: error.response?.statusText,
+                    responseData: error.response?.data,
+                    isTimeout: error.code === 'ECONNABORTED',
+                    stack: error.stack
                 });
+    
+                // Update attempt count and schedule next retry
+                try {
+                    const webhookLog = await this.webhookRepository.findById(webhookLogId);
+                    logger.debug("Retrieved webhook log for retry calculation", {
+                        webhookLogId,
+                        currentAttempts: webhookLog.attempt_count,
+                        maxAttempts: webhookLog.max_attempts
+                    });
+                    
+                    const newAttemptCount = webhookLog.attempt_count + 1;
+                    nextRetryAt = newAttemptCount >= webhookLog.max_attempts 
+                        ? null 
+                        : this.calculateNextRetry(newAttemptCount);
+    
+                    const newStatus = nextRetryAt ? 'RETRYING' : 'FAILED';
+    
+                    await this.webhookRepository.updateAttempt(
+                        webhookLogId,
+                        newStatus,
+                        newAttemptCount,
+                        nextRetryAt,
+                        error.response ? { status: error.response.status, data: error.response.data } : null,
+                        error.message
+                    );
+    
+                    logger.info("Webhook retry scheduled", {
+                        webhookLogId,
+                        newAttemptCount,
+                        maxAttempts: webhookLog.max_attempts,
+                        nextRetryAt,
+                        status: newStatus
+                    });
+    
+                } catch (dbError) {
+                    logger.error("Failed to update webhook retry information", {
+                        webhookLogId,
+                        dbError: dbError.message
+                    });
+                }
+    
+                return { 
+                    success: false, 
+                    error: error.message, 
+                    willRetry: !!nextRetryAt,
+                    nextRetryAt 
+                };
             }
-
-            return { 
-                success: false, 
-                error: error.message, 
-                willRetry: !!nextRetryAt,
-                nextRetryAt 
-            };
         }
-    }
 
     // Process pending retries (to be called by cron job)
     async processRetries() {

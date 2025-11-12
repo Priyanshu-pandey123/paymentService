@@ -415,6 +415,7 @@ async function paymentWebhook(req, res) {
       paymentDetails.order_id,
       updates
     );
+    
 
     if (updatedPayment) {
       logger.info("Webhook processed successfully - database updated", {
@@ -432,53 +433,183 @@ async function paymentWebhook(req, res) {
 
   
     res.status(200).json({ success: true });
+    // res.on("finish", async () => {
+    //   try {
+    //     const webhookService = new WebhookService();
+    //     const webhookRepository = new WebhookRepository();
+  
+    //     // Check if a successful webhook has already been sent for this order
+    //     const existingSuccessfulWebhook = await webhookRepository.findByOrderIdAndStatus(
+    //       updatedPayment.uuid, 
+    //       'SUCCESS'
+    //     );
+  
+    //     if (existingSuccessfulWebhook) {
+    //       logger.info("Webhook already successfully sent for this order, skipping", {
+    //         orderId: updatedPayment.order_id,
+    //         existingWebhookId: existingSuccessfulWebhook.id
+    //       });
+    //       return;
+    //     }
+        
+    //     // Use updatedPayment instead of fetching fresh data
+    //     console.log("******************************* Webhook Data *******************************");
+    //     console.log(JSON.stringify(updatedPayment, null, 2));
+    //     logger.info("payload   data ",JSON.stringify(updatedPayment));
+    //     console.log("***************************************************************************");
+  
+  
+    //     const payload = webhookService.preparePayload(updatedPayment)
+    //     console.log(payload,'from the webhook')
+    //     const signature = webhookService.generateSignature(payload);
+  
+    //     const log = await webhookRepository.create({
+    //       payment_uuid: updatedPayment.uuid,
+    //       webhook_url: webhookService.WEBHOOK_URL,
+    //       payload,
+    //       signature,
+    //       status: "PENDING",
+    //       attempt_count: 0,
+    //       max_attempts: 5,
+    //       next_retry_at: new Date()
+    //     });
+  
+    //     await webhookService.attemptWebhook(log.id, payload, signature);
+    //   } catch (err) {
+    //     logger.error("Failed to queue + send webhook", { error: err.message });
+    //   }
+    // });
     res.on("finish", async () => {
       try {
         const webhookService = new WebhookService();
         const webhookRepository = new WebhookRepository();
   
+        // ✅ FIX: Always fetch fresh payment data from DB to avoid stale data
+        console.log("🔄 FETCHING FRESH PAYMENT DATA FROM DB...");
+        console.log("Order ID:", paymentDetails.order_id);
+        
+        const freshPaymentData = await paymentRepository.findByOrderId(paymentDetails.order_id);
+        
+        console.log("✅ FRESH PAYMENT DATA FETCHED");
+        console.log("freshPaymentData exists:", !!freshPaymentData);
+        
+        if (freshPaymentData) {
+          console.log("📊 DATABASE PAYMENT RECORD:");
+          console.log("UUID:", freshPaymentData.uuid);
+          console.log("Order ID:", freshPaymentData.order_id);
+          console.log("Transaction Status:", freshPaymentData.transaction_status);
+          console.log("Payment Verified:", freshPaymentData.payment_verified);
+          console.log("Payment ID:", freshPaymentData.payment_id);
+          console.log("Amount:", freshPaymentData.amount);
+          console.log("Currency:", freshPaymentData.currency);
+          console.log("Plan:", freshPaymentData.plan);
+          console.log("User ID:", freshPaymentData.userId);
+          console.log("Created At:", freshPaymentData.createdAt);
+          console.log("Updated At:", freshPaymentData.updatedAt);
+          
+          logger.info("Fresh payment data from DB", {
+            uuid: freshPaymentData.uuid,
+            orderId: freshPaymentData.order_id,
+            transactionStatus: freshPaymentData.transaction_status,
+            paymentVerified: freshPaymentData.payment_verified,
+            paymentId: freshPaymentData.payment_id,
+            amount: freshPaymentData.amount,
+            createdAt: freshPaymentData.createdAt,
+            updatedAt: freshPaymentData.updatedAt
+          });
+        }
+        
+        if (!freshPaymentData) {
+          console.log("❌ PAYMENT NOT FOUND IN DATABASE!");
+          logger.error("Payment not found when sending webhook", { orderId: paymentDetails.order_id });
+          return;
+        }
+  
+        console.log("🔍 CHECKING FOR EXISTING SUCCESSFUL WEBHOOK...");
         // Check if a successful webhook has already been sent for this order
-        const existingSuccessfulWebhook = await webhookRepository.findByOrderIdAndStatus(
-          updatedPayment.uuid, 
+        const existingSuccessfulWebhook = await webhookRepository.findByUuidAndStatus(
+          freshPaymentData.uuid, 
           'SUCCESS'
         );
+        
+        console.log("Existing successful webhook:", existingSuccessfulWebhook ? "FOUND" : "NOT FOUND");
+        if (existingSuccessfulWebhook) {
+          console.log("Webhook ID:", existingSuccessfulWebhook.id);
+          console.log("Skipping webhook send - already successful");
+        }
   
         if (existingSuccessfulWebhook) {
           logger.info("Webhook already successfully sent for this order, skipping", {
-            orderId: updatedPayment.order_id,
+            orderId: freshPaymentData.order_id,
             existingWebhookId: existingSuccessfulWebhook.id
           });
           return;
         }
         
-        // Use updatedPayment instead of fetching fresh data
-        console.log("******************************* Webhook Data *******************************");
-        console.log(JSON.stringify(updatedPayment, null, 2));
-        logger.info("payload   data ",JSON.stringify(updatedPayment));
+        console.log("📤 PREPARING WEBHOOK PAYLOAD...");
+        // ✅ Use fresh payment data instead of stale updatedPayment
+        console.log("******************************* Fresh Webhook Data *******************************");
+        console.log(JSON.stringify(freshPaymentData, null, 2));
+        logger.info("Fresh payload data", JSON.stringify(freshPaymentData));
         console.log("***************************************************************************");
   
+        try {
+          console.log("🔧 Preparing webhook payload...");
+          const payload = webhookService.preparePayload(freshPaymentData);
+          console.log("✅ Payload prepared successfully");
+          console.log("📋 WEBHOOK PAYLOAD:");
+          console.log(JSON.stringify(payload, null, 2));
+          
+          console.log("🔐 Generating webhook signature...");
+          const signature = webhookService.generateSignature(payload);
+          console.log("✅ Signature generated:", signature.substring(0, 20) + "...");
   
-        const payload = webhookService.preparePayload(updatedPayment)
-        console.log(payload,'from the webhook')
-        const signature = webhookService.generateSignature(payload);
-  
-        const log = await webhookRepository.create({
-          payment_uuid: updatedPayment.uuid,
-          webhook_url: webhookService.WEBHOOK_URL,
-          payload,
-          signature,
-          status: "PENDING",
-          attempt_count: 0,
-          max_attempts: 5,
-          next_retry_at: new Date()
-        });
-  
-        await webhookService.attemptWebhook(log.id, payload, signature);
+          console.log("💾 Creating webhook log in database...");
+          const log = await webhookRepository.create({
+            payment_uuid: freshPaymentData.uuid,
+            webhook_url: webhookService.WEBHOOK_URL,
+            payload,
+            signature,
+            status: "PENDING",
+            attempt_count: 0,
+            max_attempts: 5,
+            next_retry_at: new Date()
+          });
+          
+          console.log("✅ Webhook log created with ID:", log.id);
+          logger.info("Webhook log created", { 
+            webhookLogId: log.id,
+            paymentUuid: freshPaymentData.uuid,
+            webhookUrl: webhookService.WEBHOOK_URL
+          });
+
+          console.log("📡 Attempting to send webhook...");
+          console.log("Webhook URL:", webhookService.WEBHOOK_URL);
+          console.log("Payment UUID:", freshPaymentData.uuid);
+          console.log("Transaction Status in payload:", payload.TransactionStatus);
+          
+          await webhookService.attemptWebhook(log.id, payload, signature);
+          
+          console.log("✅ Webhook attempt completed");
+          
+        } catch (webhookCreateError) {
+          console.log("❌ WEBHOOK CREATION/ATTEMPT FAILED!");
+          console.log("Error:", webhookCreateError.message);
+          logger.error("Failed to create webhook log", { 
+            error: webhookCreateError.message,
+            paymentUuid: freshPaymentData.uuid,
+            stack: webhookCreateError.stack
+          });
+        }
       } catch (err) {
-        logger.error("Failed to queue + send webhook", { error: err.message });
+        console.log("❌ CRITICAL WEBHOOK ERROR!");
+        console.log("Error:", err.message);
+        logger.error("Failed to queue + send webhook", { 
+          error: err.message,
+          stack: err.stack
+        });
       }
     });
-
   } catch (error) {
     return res.status(500).json({ success: false, error: "Server error" });
   }

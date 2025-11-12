@@ -41,7 +41,6 @@ class WebhookRepository {
             throw error;
         }
     }
-
     async updateAttempt(id, status, attemptCount, nextRetryAt, responseData = null, errorMessage = null) {
         try {
             const updateData = {
@@ -100,11 +99,11 @@ class WebhookRepository {
         }
     }
 
-    async findByOrderIdAndStatus(orderId, status) {
+    async findByUuidAndStatus(uuid, status) {
         try {
             return await WebhookLog.findOne({
                 where: {
-                    payment_uuid: orderId,
+                    payment_uuid: uuid,
                     status: status
                 }
             });
