@@ -39,6 +39,7 @@ async function sendPaymentStatusWebhook(paymentData) {
             PaymentGateway: paymentData.PaymentGateway || paymentData.payment_gateway || 'Razorpay',
             IpAddress: paymentData.IpAddress || paymentData.ip_address || paymentData.ip,
             TransactionStatus: "PENDING",
+            Plan:paymentData.pla || "",
             CreatedAt: paymentData.CreatedAt || paymentData.createdAt || new Date(),
             UpdatedAt: paymentData.UpdatedAt || paymentData.updatedAt || new Date()
     };
