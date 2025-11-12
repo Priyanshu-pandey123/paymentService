@@ -248,6 +248,31 @@ class WebhookRepository {
             throw error;
         }
     }
+
+    async findByPaymentUuid(uuid) {
+        try {
+            return await WebhookLog.findOne({
+                where: {
+                    payment_uuid: uuid
+                },
+                order: [['createdAt', 'DESC']] // Get latest one
+            });
+        } catch (error) {
+            logger.error('Failed to find webhook by payment UUID', { uuid, error: error.message });
+            throw error;
+        }
+    }
+
+    async update(id, updates) {
+        try {
+            const [affectedRows] = await WebhookLog.update(updates, { where: { id } });
+            logger.info('Webhook log updated', { id, updates: Object.keys(updates) });
+            return affectedRows > 0;
+        } catch (error) {
+            logger.error('Failed to update webhook log', { id, error: error.message });
+            throw error;
+        }
+    }
 }
 
 module.exports = WebhookRepository;

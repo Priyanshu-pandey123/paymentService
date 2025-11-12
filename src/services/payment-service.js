@@ -565,32 +565,44 @@ async function paymentWebhook(req, res) {
           console.log("✅ Signature generated:", signature.substring(0, 20) + "...");
   
           console.log("💾 Creating webhook log in database...");
-          const log = await webhookRepository.create({
-            payment_uuid: freshPaymentData.uuid,
-            webhook_url: webhookService.WEBHOOK_URL,
-            payload,
-            signature,
-            status: "PENDING",
-            attempt_count: 0,
-            max_attempts: 5,
-            next_retry_at: new Date()
-          });
+          // Check if a webhook log already exists for this payment
+          let existingWebhookLog = await webhookRepository.findByPaymentUuid(freshPaymentData.uuid);
           
-          console.log("✅ Webhook log created with ID:", log.id);
-          logger.info("Webhook log created", { 
-            webhookLogId: log.id,
-            paymentUuid: freshPaymentData.uuid,
-            webhookUrl: webhookService.WEBHOOK_URL
-          });
-
-          console.log("📡 Attempting to send webhook...");
-          console.log("Webhook URL:", webhookService.WEBHOOK_URL);
-          console.log("Payment UUID:", freshPaymentData.uuid);
-          console.log("Transaction Status in payload:", payload.TransactionStatus);
+          console.log("Existing webhook log:", existingWebhookLog ? "FOUND (ID: " + existingWebhookLog.id + ")" : "NOT FOUND");
           
-          await webhookService.attemptWebhook(log.id, payload, signature);
-          
-          console.log("✅ Webhook attempt completed");
+          if (existingWebhookLog) {
+            console.log("🔄 UPDATING EXISTING WEBHOOK LOG...");
+            
+            // Update the existing log with fresh data
+            await webhookRepository.update(existingWebhookLog.id, {
+              payload: payload,
+              signature: signature,
+              status: "PENDING",
+              attempt_count: existingWebhookLog.attempt_count + 1,
+              next_retry_at: new Date(),
+              last_attempt_at: new Date()
+            });
+            
+            console.log("✅ Webhook log updated, attempting send...");
+            await webhookService.attemptWebhook(existingWebhookLog.id, payload, signature);
+          } else {
+            console.log("�� CREATING NEW WEBHOOK LOG...");
+            
+            // Create new log if none exists
+            const log = await webhookRepository.create({
+              payment_uuid: freshPaymentData.uuid,
+              webhook_url: webhookService.WEBHOOK_URL,
+              payload,
+              signature,
+              status: "PENDING",
+              attempt_count: 0,
+              max_attempts: 5,
+              next_retry_at: new Date()
+            });
+            
+            console.log("✅ Webhook log created with ID:", log.id);
+            await webhookService.attemptWebhook(log.id, payload, signature);
+          }
           
         } catch (webhookCreateError) {
           console.log("❌ WEBHOOK CREATION/ATTEMPT FAILED!");
