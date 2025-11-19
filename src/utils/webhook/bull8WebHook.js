@@ -9,9 +9,9 @@ async function sendPaymentStatusWebhook(paymentData) {
   let WEBHOOK_URL, WEBHOOK_SECRET, DOMAIN; // Declare variables outside try block
   
   try {
-    WEBHOOK_URL = WebhookConfig.WEBHOOK_URL || 'http://182.70.127.254:44346/api/webhook/payment-status';
-    WEBHOOK_SECRET = WebhookConfig.WEBHOOK_SECRET || 'OMf1AZ8ULqqfr4RQlcq7';
-    DOMAIN = WebhookConfig.WEBHOOK_DOMAIN || 'bull8pay.com';
+    WEBHOOK_URL = WebhookConfig.WEBHOOK_URL;
+    WEBHOOK_SECRET = WebhookConfig.WEBHOOK_SECRET ;
+    DOMAIN = WebhookConfig.WEBHOOK_DOMAIN ;
     
     if (!WEBHOOK_URL) {
       logger.error("PAYMENT_STATUS_WEBHOOK_URL environment variable is not set");
@@ -47,6 +47,7 @@ async function sendPaymentStatusWebhook(paymentData) {
 
     // Create signature
     const payload = JSON.stringify(transformedData);
+    logger.info("paylaod data ", payload, transformedData)
     const signature = crypto
       .createHmac("sha256", WEBHOOK_SECRET)
       .update(payload)
